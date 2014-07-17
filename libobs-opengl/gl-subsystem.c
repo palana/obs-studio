@@ -187,6 +187,8 @@ const char *device_preprocessor_name(void)
 	return "_OPENGL";
 }
 
+#define LOG_GL_STR(x) blog(LOG_INFO, #x ": %s", glGetString(x))
+
 device_t device_create(struct gs_init_data *info)
 {
 	struct gs_device *device = bzalloc(sizeof(struct gs_device));
@@ -194,6 +196,11 @@ device_t device_create(struct gs_init_data *info)
 	device->plat = gl_platform_create(device, info);
 	if (!device->plat)
 		goto fail;
+
+	LOG_GL_STR(GL_VENDOR);
+	LOG_GL_STR(GL_RENDERER);
+	LOG_GL_STR(GL_VERSION);
+	LOG_GL_STR(GL_SHADING_LANGUAGE_VERSION);
 
 	if (!gl_init_extensions(device))
 		goto fail;
