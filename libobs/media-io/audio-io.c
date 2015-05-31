@@ -134,10 +134,16 @@ static inline double positive_round(double val)
 	return floor(val+0.5);
 }
 
+static inline size_t clamp_double_to_size_t(double val)
+{
+	return val < 0 ? 0 : (val > (~(size_t)0) ? (~(size_t)0) : (size_t)val);
+}
+
 static size_t ts_diff_frames(const audio_t *audio, uint64_t ts1, uint64_t ts2)
 {
 	double diff = ts_to_frames(audio, ts1) - ts_to_frames(audio, ts2);
-	return (size_t)positive_round(diff);
+	double rounded = positive_round(diff);
+	return clamp_double_to_size_t(rounded);
 }
 
 static size_t ts_diff_bytes(const audio_t *audio, uint64_t ts1, uint64_t ts2)
