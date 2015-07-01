@@ -24,10 +24,10 @@ void DoubleSlider::setDoubleConstraints(double newMin, double newMax,
 
 void DoubleSlider::intValChanged(int val)
 {
-	emit doubleValChanged(double(val) * minStep + minVal);
+	emit doubleValChanged((minVal/minStep + val) * minStep);
 }
 
 void DoubleSlider::setDoubleVal(double val)
 {
-	setValue(int((val - minVal) / minStep));
+	setValue(int(round((val - minVal) / minStep)));
 }
