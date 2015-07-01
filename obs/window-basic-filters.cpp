@@ -57,6 +57,8 @@ OBSBasicFilters::OBSBasicFilters(QWidget *parent, OBSSource source_)
 	                                "rename",
 	                                OBSBasicFilters::SourceRenamed, this)
 {
+    main = reinterpret_cast<OBSBasic*>(parent);
+
 	ui->setupUi(this);
 	UpdateFilters();
 
@@ -182,7 +184,6 @@ void OBSBasicFilters::AddFilter(OBSSource filter)
 	list->addItem(item);
 	list->setCurrentItem(item);
 	SetupVisibilityItem(list, item, filter);
-	main->SaveProject();
 }
 
 void OBSBasicFilters::RemoveFilter(OBSSource filter)
@@ -286,6 +287,8 @@ void OBSBasicFilters::UpdateFilters()
 
 				window->AddFilter(filter);
 			}, this);
+
+    main->SaveProject();
 }
 
 static bool filter_compatible(bool async, uint32_t sourceFlags,
