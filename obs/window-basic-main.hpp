@@ -402,7 +402,7 @@ public:
 	virtual config_t *Config() const override;
 
 	virtual int GetProfilePath(char *path, size_t size, const char *file)
-		const;
+		const override;
 
 private:
 	std::unique_ptr<Ui::OBSBasic> ui;
