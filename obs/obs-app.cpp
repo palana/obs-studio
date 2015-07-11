@@ -336,6 +336,7 @@ bool OBSApp::InitGlobalConfig()
 
 bool OBSApp::InitLocale()
 {
+	OBSProfileScope("OBSApp::InitLocale");
 	const char *lang = config_get_string(globalConfig, "General",
 			"Language");
 
@@ -526,6 +527,8 @@ static void move_basic_to_scene_collections(void)
 
 void OBSApp::AppInit()
 {
+	OBSProfileScope("OBSApp::AppInit");
+
 	if (!InitApplicationBundle())
 		throw "Failed to initialize application bundle";
 	if (!MakeUserDirs())
@@ -564,6 +567,8 @@ const char *OBSApp::GetRenderModule() const
 
 bool OBSApp::OBSInit()
 {
+	OBSProfileScope("OBSApp::OBSInit");
+
 	bool licenseAccepted = config_get_bool(globalConfig, "General",
 			"LicenseAccepted");
 	OBSLicenseAgreement agreement(nullptr);
@@ -844,6 +849,7 @@ static void create_log_file(fstream &logFile)
 	}
 }
 
+static const char *run_program_init = "run_program_init";
 static int run_program(fstream &logFile, int argc, char *argv[])
 {
 	int ret = -1;
@@ -860,6 +866,9 @@ static int run_program(fstream &logFile, int argc, char *argv[])
 		prof_release(static_cast<void*>(&ProfileRelease),
 				ProfileRelease);
 
+	profile_register_root(run_program_init);
+	OBSScopeProfiler prof{run_program_init};
+
 	QCoreApplication::addLibraryPath(".");
 
 	OBSApp program(argc, argv);
@@ -875,6 +884,8 @@ static int run_program(fstream &logFile, int argc, char *argv[])
 		if (!program.OBSInit())
 			return 0;
 
+		prof.Stop();
+		profile_print();
 		return program.exec();
 
 	} catch (const char *error) {

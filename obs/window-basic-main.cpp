@@ -27,6 +27,7 @@
 #include <util/dstr.h>
 #include <util/util.hpp>
 #include <util/platform.h>
+#include <util/profiler.h>
 #include <graphics/math-defs.h>
 
 #include "obs-app.hpp"
@@ -569,6 +570,8 @@ bool OBSBasic::LoadService()
 
 bool OBSBasic::InitService()
 {
+	OBSProfileScope("OBSBasic::InitService");
+
 	if (LoadService())
 		return true;
 
@@ -720,6 +723,8 @@ bool OBSBasic::InitBasicConfigDefaults()
 
 bool OBSBasic::InitBasicConfig()
 {
+	OBSProfileScope("OBSBasic::InitBasicConfig");
+
 	char configPath[512];
 
 	int ret = GetProfilePath(configPath, sizeof(configPath), "");
@@ -758,6 +763,8 @@ bool OBSBasic::InitBasicConfig()
 
 void OBSBasic::InitOBSCallbacks()
 {
+	OBSProfileScope("OBSBasic::InitOBSCallbacks");
+
 	signalHandlers.reserve(signalHandlers.size() + 6);
 	signalHandlers.emplace_back(obs_get_signal_handler(), "source_add",
 			OBSBasic::SourceAdded, this);
@@ -775,6 +782,8 @@ void OBSBasic::InitOBSCallbacks()
 
 void OBSBasic::InitPrimitives()
 {
+	OBSProfileScope("OBSBasic::InitPrimitives");
+
 	obs_enter_graphics();
 
 	gs_render_start(true);
@@ -797,6 +806,8 @@ void OBSBasic::InitPrimitives()
 
 void OBSBasic::ResetOutputs()
 {
+	OBSProfileScope("OBSBasic::ResetOutputs");
+
 	const char *mode = config_get_string(basicConfig, "Output", "Mode");
 	bool advOut = astrcmpi(mode, "Advanced") == 0;
 
@@ -815,6 +826,8 @@ void OBSBasic::ResetOutputs()
 
 void OBSBasic::OBSInit()
 {
+	OBSProfileScope("OBSBasic::OBSInit");
+
 	const char *sceneCollection = config_get_string(App()->GlobalConfig(),
 			"Basic", "SceneCollectionFile");
 	char savePath[512];
@@ -876,9 +889,12 @@ void OBSBasic::OBSInit()
 
 	InitPrimitives();
 
-	disableSaving--;
-	Load(savePath);
-	disableSaving++;
+	{
+		OBSProfileScope("OBSBasic::Load");
+		disableSaving--;
+		Load(savePath);
+		disableSaving++;
+	}
 
 	TimedCheckForUpdates();
 	loaded = true;
@@ -905,6 +921,8 @@ void OBSBasic::OBSInit()
 
 void OBSBasic::InitHotkeys()
 {
+	OBSProfileScope("OBSBasic::InitHotkeys");
+
 	struct obs_hotkeys_translations t = {};
 	t.insert                       = Str("Hotkeys.Insert");
 	t.del                          = Str("Hotkeys.Delete");
@@ -970,6 +988,8 @@ void OBSBasic::HotkeyTriggered(void *data, obs_hotkey_id id, bool pressed)
 
 void OBSBasic::CreateHotkeys()
 {
+	OBSProfileScope("OBSBasic::CreateHotkeys");
+
 	auto LoadHotkeyData = [&](const char *name) -> OBSData
 	{
 		const char *info = config_get_string(basicConfig,
@@ -1991,6 +2011,8 @@ static inline enum video_format GetVideoFormatFromName(const char *name)
 
 int OBSBasic::ResetVideo()
 {
+	OBSProfileScope("OBSBasic::ResetVideo");
+
 	struct obs_video_info ovi;
 	int ret;
 
@@ -2052,6 +2074,8 @@ int OBSBasic::ResetVideo()
 
 bool OBSBasic::ResetAudio()
 {
+	OBSProfileScope("OBSBasic::ResetAudio");
+
 	struct obs_audio_info ai;
 	ai.samples_per_sec = config_get_uint(basicConfig, "Audio",
 			"SampleRate");
