@@ -22,6 +22,7 @@
 #include <util/bmem.h>
 #include <util/dstr.h>
 #include <util/platform.h>
+#include <util/profiler.h>
 #include <obs-config.h>
 #include <obs.hpp>
 
@@ -846,6 +847,19 @@ static void create_log_file(fstream &logFile)
 static int run_program(fstream &logFile, int argc, char *argv[])
 {
 	int ret = -1;
+
+	auto ProfileRelease = [](void *)
+	{
+		profile_print();
+		profile_print_overhead();
+		profile_print_time_between_calls();
+		profile_free();
+		profile_free_names();
+	};
+	std::unique_ptr<void, decltype(ProfileRelease)>
+		prof_release(static_cast<void*>(&ProfileRelease),
+				ProfileRelease);
+
 	QCoreApplication::addLibraryPath(".");
 
 	OBSApp program(argc, argv);
