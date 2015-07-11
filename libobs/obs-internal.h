@@ -23,6 +23,7 @@
 #include "util/dstr.h"
 #include "util/threading.h"
 #include "util/platform.h"
+#include "util/profiler.h"
 #include "callback/signal.h"
 #include "callback/proc.h"
 
