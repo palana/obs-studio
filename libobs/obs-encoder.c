@@ -611,6 +611,10 @@ static inline void do_encode(struct obs_encoder *encoder,
 		struct encoder_frame *frame)
 {
 	profile_start(do_encode_name, 0);
+	if (!encoder->profile_encoder_encode_name)
+		encoder->profile_encoder_encode_name =
+			profile_store_name("encode(%s)", encoder->context.name);
+
 	struct encoder_packet pkt = {0};
 	bool received = false;
 	bool success;
@@ -619,8 +623,10 @@ static inline void do_encode(struct obs_encoder *encoder,
 	pkt.timebase_den = encoder->timebase_den;
 	pkt.encoder = encoder;
 
+	profile_start(encoder->profile_encoder_encode_name, 0);
 	success = encoder->info.encode(encoder->context.data, frame, &pkt,
 			&received);
+	profile_end(encoder->profile_encoder_encode_name);
 	if (!success) {
 		full_stop(encoder);
 		blog(LOG_ERROR, "Error encoding with encoder '%s'",

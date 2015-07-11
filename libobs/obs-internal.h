@@ -680,6 +680,8 @@ struct obs_encoder {
 
 	pthread_mutex_t                 callbacks_mutex;
 	DARRAY(struct encoder_callback) callbacks;
+
+	const char                      *profile_encoder_encode_name;
 };
 
 extern struct obs_encoder_info *find_encoder(const char *id);
