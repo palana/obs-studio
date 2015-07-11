@@ -22,6 +22,7 @@
 #include "../util/darray.h"
 #include "../util/circlebuf.h"
 #include "../util/platform.h"
+#include "../util/profiler.h"
 
 #include "audio-io.h"
 #include "audio-resampler.h"
@@ -402,9 +403,13 @@ static void *audio_thread(void *param)
 
 	os_set_thread_name("audio-io: audio thread");
 
+	const char *audio_thread_name =
+		profile_store_name("audio_thread(%s)", audio->info.name);
+	
 	while (os_event_try(audio->stop_event) == EAGAIN) {
 		os_sleep_ms(AUDIO_WAIT_TIME);
 
+		profile_start(audio_thread_name, 0);
 		pthread_mutex_lock(&audio->line_mutex);
 
 		audio_time = os_gettime_ns() - buffer_time;
@@ -412,6 +417,7 @@ static void *audio_thread(void *param)
 		prev_time  = audio_time;
 
 		pthread_mutex_unlock(&audio->line_mutex);
+		profile_end(audio_thread_name);
 	}
 
 	return NULL;

@@ -18,6 +18,7 @@
 #include <assert.h>
 #include "../util/bmem.h"
 #include "../util/platform.h"
+#include "../util/profiler.h"
 #include "../util/threading.h"
 #include "../util/darray.h"
 
@@ -162,16 +163,21 @@ static void *video_thread(void *param)
 
 	os_set_thread_name("video-io: video thread");
 
+	const char *video_thread_name =
+		profile_store_name("video_thread(%s)", video->info.name);
+
 	while (os_sem_wait(video->update_semaphore) == 0) {
 		if (video->stop)
 			break;
 
+		profile_start(video_thread_name, 0);
 		while (!video->stop && !video_output_cur_frame(video)) {
 			video->total_frames++;
 			video->skipped_frames++;
 		}
 
 		video->total_frames++;
+		profile_end(video_thread_name);
 	}
 
 	return NULL;
