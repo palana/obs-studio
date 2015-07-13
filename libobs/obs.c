@@ -738,7 +738,7 @@ bool obs_startup(const char *locale)
 {
 	bool success;
 
-	profile_start(obs_startup_name, false);
+	profile_start(obs_startup_name);
 
 	if (obs) {
 		blog(LOG_WARNING, "Tried to call obs_startup more than once");

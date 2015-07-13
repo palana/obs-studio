@@ -199,30 +199,15 @@ static profile_entry *get_child(profile_entry *parent, const char *name)
 }
 
 static void merge_call(profile_entry *entry, profile_call *call,
-		profile_call *prev_call, bool record_time_between_calls)
+		profile_call *prev_call)
 {
-	entry->expected_time_between_calls = record_time_between_calls ?
-		(call->expected_time_between_calls + 500)/1000 : 0;
-
-	record_time_between_calls = record_time_between_calls &&
-		!!call->expected_time_between_calls;
-
 	const size_t num = call->children.num;
 	for (size_t i = 0; i < num; i++) {
 		profile_call *child = &call->children.array[i];
-		profile_call *prev_child =
-			prev_call && prev_call->children.num > i ?
-			&prev_call->children.array[i] : NULL;
-
-		bool names_match = prev_child &&
-			child->name == prev_child->name;
-
-		merge_call(get_child(entry, child->name), child,
-					names_match ? prev_child : NULL,
-					record_time_between_calls);
+		merge_call(get_child(entry, child->name), child, NULL);
 	}
 
-	if (record_time_between_calls && prev_call) {
+	if (entry->expected_time_between_calls != 0 && prev_call) {
 		migrate_old_entries(&entry->times_between_calls, true);
 		uint64_t usec = diff_ns_to_usec(prev_call->start_time,
 				call->start_time);
@@ -287,12 +272,14 @@ static profile_root_entry *get_root_entry(const char *name)
 	return r_entry;
 }
 
-void profile_register_root(const char *name)
+void profile_register_root(const char *name,
+		uint64_t expected_time_between_calls)
 {
 	if (!lock_root())
 		return;
 
-	get_root_entry(name);
+	get_root_entry(name)->entry->expected_time_between_calls =
+		(expected_time_between_calls + 500) / 1000;
 	pthread_mutex_unlock(&root_mutex);
 }
 
@@ -320,14 +307,14 @@ static void merge_context(profile_call *context)
 	pthread_mutex_lock(mutex);
 	pthread_mutex_unlock(&root_mutex);
 
-	merge_call(entry, context, prev_call, true);
+	merge_call(entry, context, prev_call);
 
 	pthread_mutex_unlock(mutex);
 
 	free_call_context(prev_call);
 }
 
-void profile_start(const char *name, uint64_t expected_time_between_calls)
+void profile_start(const char *name)
 {
 	if (!thread_enabled)
 		return;
@@ -336,7 +323,6 @@ void profile_start(const char *name, uint64_t expected_time_between_calls)
 		.name = name,
 		.overhead_start = os_gettime_ns(),
 		.parent = thread_context,
-		.expected_time_between_calls = expected_time_between_calls,
 	};
 
 	profile_call *call = NULL;

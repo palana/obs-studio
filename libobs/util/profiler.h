@@ -11,10 +11,10 @@ struct profiler_time_entry {
 	uint64_t count;
 };
 
-EXPORT void profile_register_root(const char *name);
-
-EXPORT void profile_start(const char *name,
+EXPORT void profile_register_root(const char *name,
 		uint64_t expected_time_between_calls);
+
+EXPORT void profile_start(const char *name);
 EXPORT void profile_end(const char *name);
 
 EXPORT void profile_print(void);
@@ -42,11 +42,10 @@ struct OBSScopeProfiler {
 	const char *name;
 	bool enabled = true;
 
-	OBSScopeProfiler(const char *name,
-			 uint64_t expected_time_between_calls=0)
+	OBSScopeProfiler(const char *name)
 		: name(name)
 	{
-		profile_start(name, expected_time_between_calls);
+		profile_start(name);
 	}
 
 	~OBSScopeProfiler() { Stop(); }

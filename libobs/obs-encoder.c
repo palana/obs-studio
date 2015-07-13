@@ -610,7 +610,7 @@ static const char *do_encode_name = "do_encode";
 static inline void do_encode(struct obs_encoder *encoder,
 		struct encoder_frame *frame)
 {
-	profile_start(do_encode_name, 0);
+	profile_start(do_encode_name);
 	if (!encoder->profile_encoder_encode_name)
 		encoder->profile_encoder_encode_name =
 			profile_store_name("encode(%s)", encoder->context.name);
@@ -623,7 +623,7 @@ static inline void do_encode(struct obs_encoder *encoder,
 	pkt.timebase_den = encoder->timebase_den;
 	pkt.encoder = encoder;
 
-	profile_start(encoder->profile_encoder_encode_name, 0);
+	profile_start(encoder->profile_encoder_encode_name);
 	success = encoder->info.encode(encoder->context.data, frame, &pkt,
 			&received);
 	profile_end(encoder->profile_encoder_encode_name);
@@ -656,7 +656,7 @@ static inline void do_encode(struct obs_encoder *encoder,
 static const char *receive_video_name = "receive_video";
 static void receive_video(void *param, struct video_data *frame)
 {
-	profile_start(receive_video_name, 0);
+	profile_start(receive_video_name);
 
 	struct obs_encoder    *encoder  = param;
 	struct encoder_frame  enc_frame;
@@ -684,7 +684,7 @@ static void receive_video(void *param, struct video_data *frame)
 static const char *buffer_audio_name = "buffer_audio";
 static bool buffer_audio(struct obs_encoder *encoder, struct audio_data *data)
 {
-	profile_start(buffer_audio_name, 0);
+	profile_start(buffer_audio_name);
 
 	size_t samplerate = encoder->samplerate;
 	size_t size = data->frames * encoder->blocksize;
@@ -759,7 +759,7 @@ static void send_audio_data(struct obs_encoder *encoder)
 static const char *receive_audio_name = "receive_audio";
 static void receive_audio(void *param, size_t mix_idx, struct audio_data *data)
 {
-	profile_start(receive_audio_name, 0);
+	profile_start(receive_audio_name);
 
 	struct obs_encoder *encoder = param;
 

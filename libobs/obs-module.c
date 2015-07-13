@@ -105,7 +105,7 @@ bool obs_init_module(obs_module_t *module)
 
 	const char *profile_name =
 		profile_store_name("obs_init_module(%s)", module->file);
-	profile_start(profile_name, false);
+	profile_start(profile_name);
 
 	module->loaded = module->load();
 	if (!module->loaded)
@@ -193,7 +193,7 @@ static void load_all_callback(void *param, const struct obs_module_info *info)
 static const char *obs_load_all_modules_name = "obs_load_all_modules";
 void obs_load_all_modules(void)
 {
-	profile_start(obs_load_all_modules_name, false);
+	profile_start(obs_load_all_modules_name);
 	obs_find_modules(load_all_callback, NULL);
 	profile_end(obs_load_all_modules_name);
 }

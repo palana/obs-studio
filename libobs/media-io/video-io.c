@@ -170,7 +170,7 @@ static void *video_thread(void *param)
 		if (video->stop)
 			break;
 
-		profile_start(video_thread_name, 0);
+		profile_start(video_thread_name);
 		while (!video->stop && !video_output_cur_frame(video)) {
 			video->total_frames++;
 			video->skipped_frames++;

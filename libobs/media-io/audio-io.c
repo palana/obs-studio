@@ -409,7 +409,7 @@ static void *audio_thread(void *param)
 	while (os_event_try(audio->stop_event) == EAGAIN) {
 		os_sleep_ms(AUDIO_WAIT_TIME);
 
-		profile_start(audio_thread_name, 0);
+		profile_start(audio_thread_name);
 		pthread_mutex_lock(&audio->line_mutex);
 
 		audio_time = os_gettime_ns() - buffer_time;

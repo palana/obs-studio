@@ -866,7 +866,7 @@ static int run_program(fstream &logFile, int argc, char *argv[])
 		prof_release(static_cast<void*>(&ProfileRelease),
 				ProfileRelease);
 
-	profile_register_root(run_program_init);
+	profile_register_root(run_program_init, 0);
 	OBSScopeProfiler prof{run_program_init};
 
 	QCoreApplication::addLibraryPath(".");

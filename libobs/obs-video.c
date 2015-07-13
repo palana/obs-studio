@@ -140,7 +140,7 @@ static const char *render_main_texture_name = "render_main_texture";
 static inline void render_main_texture(struct obs_core_video *video,
 		int cur_texture)
 {
-	profile_start(render_main_texture_name, 0);
+	profile_start(render_main_texture_name);
 
 	struct vec4 clear_color;
 	vec4_set(&clear_color, 0.0f, 0.0f, 0.0f, 1.0f);
@@ -206,7 +206,7 @@ static const char *render_output_texture_name = "render_output_texture";
 static inline void render_output_texture(struct obs_core_video *video,
 		int cur_texture, int prev_texture)
 {
-	profile_start(render_output_texture_name, 0);
+	profile_start(render_output_texture_name);
 
 	gs_texture_t *texture = video->render_textures[prev_texture];
 	gs_texture_t *target  = video->output_textures[cur_texture];
@@ -265,7 +265,7 @@ static const char *render_convert_texture_name = "render_convert_texture";
 static void render_convert_texture(struct obs_core_video *video,
 		int cur_texture, int prev_texture)
 {
-	profile_start(render_convert_texture_name, 0);
+	profile_start(render_convert_texture_name);
 
 	gs_texture_t *texture = video->output_textures[prev_texture];
 	gs_texture_t *target  = video->convert_textures[cur_texture];
@@ -319,7 +319,7 @@ static const char *stage_output_texture_name = "stage_output_texture";
 static inline void stage_output_texture(struct obs_core_video *video,
 		int cur_texture, int prev_texture)
 {
-	profile_start(stage_output_texture_name, 0);
+	profile_start(stage_output_texture_name);
 
 	gs_texture_t   *texture;
 	bool        texture_ready;
@@ -566,18 +566,18 @@ static inline void output_frame(void)
 
 	memset(&frame, 0, sizeof(struct video_data));
 
-	profile_start(output_frame_gs_context_name, 0);
+	profile_start(output_frame_gs_context_name);
 	gs_enter_context(video->graphics);
 
-	profile_start(output_frame_render_video_name, 0);
+	profile_start(output_frame_render_video_name);
 	render_video(video, cur_texture, prev_texture);
 	profile_end(output_frame_render_video_name);
 
-	profile_start(output_frame_download_frame_name, 0);
+	profile_start(output_frame_download_frame_name);
 	frame_ready = download_frame(video, prev_texture, &frame);
 	profile_end(output_frame_download_frame_name);
 
-	profile_start(output_frame_gs_flush_name, 0);
+	profile_start(output_frame_gs_flush_name);
 	gs_flush();
 	profile_end(output_frame_gs_flush_name);
 
@@ -590,7 +590,7 @@ static inline void output_frame(void)
 				sizeof(vframe_info));
 
 		frame.timestamp = vframe_info.timestamp;
-		profile_start(output_frame_output_video_data_name, 0);
+		profile_start(output_frame_output_video_data_name);
 		output_video_data(video, &frame, vframe_info.count);
 		profile_end(output_frame_output_video_data_name);
 	}
@@ -613,18 +613,20 @@ void *obs_video_thread(void *param)
 
 	const char *video_thread_name = profile_store_name(
 			"obs_video_thread(%g ms)", interval / 1000000.);
-	while (!video_output_stopped(obs->video.video)) {
-		profile_start(video_thread_name, interval);
+	profile_register_root(video_thread_name, interval);
 
-		profile_start(tick_sources_name, 0);
+	while (!video_output_stopped(obs->video.video)) {
+		profile_start(video_thread_name);
+
+		profile_start(tick_sources_name);
 		last_time = tick_sources(obs->video.video_time, last_time);
 		profile_end(tick_sources_name);
 
-		profile_start(render_displays_name, 0);
+		profile_start(render_displays_name);
 		render_displays();
 		profile_end(render_displays_name);
 
-		profile_start(output_frame_name, 0);
+		profile_start(output_frame_name);
 		output_frame();
 		profile_end(output_frame_name);
 
