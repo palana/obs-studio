@@ -358,7 +358,18 @@ void profile_end(const char *name)
 		blog(LOG_ERROR, "Called profile end with mismatching name: "
 				"start(\"%s\"[%p]) <-> end(\"%s\"[%p])",
 				call->name, call->name, name, name);
-		return;
+
+		profile_call *parent = call->parent;
+		while (parent && parent->parent &&  parent->name != name)
+			parent = parent->parent;
+
+		if (!parent || parent->name != name)
+			return;
+
+		while (call->name != name) {
+			profile_end(call->name);
+			call = call->parent;
+		}
 	}
 
 	thread_context = call->parent;
