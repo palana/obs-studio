@@ -1,15 +1,11 @@
 #pragma once
 
 #include "base.h"
+#include "darray.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-struct profiler_time_entry {
-	uint64_t time_delta;
-	uint64_t count;
-};
 
 EXPORT void profile_register_root(const char *name,
 		uint64_t expected_time_between_calls);
@@ -34,6 +30,37 @@ EXPORT const char *profile_store_name(const char *format, ...);
 EXPORT void profile_free_names(void);
 
 #undef PRINTFATTR
+
+struct profiler_time_entry {
+	uint64_t time_delta;
+	uint64_t count;
+};
+
+typedef struct profiler_snapshot profiler_snapshot_t;
+typedef struct profiler_snapshot_entry profiler_snapshot_entry_t;
+typedef struct profiler_time_entry profiler_time_entry_t;
+
+typedef DARRAY(profiler_time_entry_t) profiler_time_entries_t;
+
+typedef bool (*profiler_entry_enum_func)(void *context,
+		profiler_snapshot_entry_t *entry);
+
+EXPORT profiler_snapshot_t *profile_snapshot_create(void);
+EXPORT void profile_snapshot_free(profiler_snapshot_t *snap);
+
+EXPORT size_t profiler_snapshot_num_roots(profiler_snapshot_t *snap);
+EXPORT void profiler_snapshot_enumerate_roots(profiler_snapshot_t *snap,
+		profiler_entry_enum_func func, void *context);
+
+EXPORT size_t profiler_snapshot_num_children(profiler_snapshot_entry_t *entry);
+EXPORT void profiler_snapshot_enumerate_children(
+		profiler_snapshot_entry_t *entry,
+		profiler_entry_enum_func func, void *context);
+
+EXPORT const char *profiler_snapshot_entry_name(
+		profiler_snapshot_entry_t *entry);
+EXPORT profiler_time_entries_t *profiler_snapshot_entry_times(
+		profiler_snapshot_entry_t *entry);
 
 #ifdef __cplusplus
 }

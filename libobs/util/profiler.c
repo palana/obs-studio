@@ -390,11 +390,9 @@ static int profiler_time_entry_compare(const void *first, const void *second)
 	return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
 }
 
-typedef DARRAY(profiler_time_entry) profiler_time_array;
-
 static uint64_t copy_map_to_array(profile_times_table *map,
-		profiler_time_array *entry_buffer,
-		uint64_t *min_, uint64_t *max_)
+		profiler_time_entries_t *entry_buffer,
+		uint64_t *min_, uint64_t *max_, bool sort)
 {
 	migrate_old_entries(map, false);
 
@@ -423,16 +421,17 @@ static uint64_t copy_map_to_array(profile_times_table *map,
 	if (max_)
 		*max_ = max__;
 
-	qsort(entry_buffer->array, entry_buffer->num,
-			sizeof(profiler_time_entry),
-			profiler_time_entry_compare);
+	if (sort)
+		qsort(entry_buffer->array, entry_buffer->num,
+				sizeof(profiler_time_entry),
+				profiler_time_entry_compare);
 
 	return calls;
 }
 
 static void gather_stats(uint64_t expected_time_between_calls,
 		profile_times_table *map,
-		profiler_time_array *entry_buffer,
+		profiler_time_entries_t *entry_buffer,
 		uint64_t *calls,
 		uint64_t *min_, uint64_t *max_, uint64_t *percentile99,
 		double *percent_within_bounds)
@@ -445,7 +444,7 @@ static void gather_stats(uint64_t expected_time_between_calls,
 		return;
 	}
 
-	*calls = copy_map_to_array(map, entry_buffer, min_, max_);
+	*calls = copy_map_to_array(map, entry_buffer, min_, max_, true);
 
 	/*if (entry_buffer->num > 2)
 		blog(LOG_INFO, "buffer-size %lu, overall count %llu\n"
@@ -518,12 +517,14 @@ static inline profile_times_table *get_times_between_calls(profile_entry *entry)
 }
 
 typedef void (*profile_entry_print_func)(profile_entry *entry,
-		select_times_table get_table, profiler_time_array *entry_buffer,
+		select_times_table get_table,
+		profiler_time_entries_t *entry_buffer,
 		struct dstr *indent_buffer, struct dstr *output_buffer,
 		unsigned indent, uint64_t active, uint64_t parent_calls);
 
 static void profile_print_entry(profile_entry *entry,
-		select_times_table get_table, profiler_time_array *entry_buffer,
+		select_times_table get_table,
+		profiler_time_entries_t *entry_buffer,
 		struct dstr *indent_buffer, struct dstr *output_buffer,
 		unsigned indent, uint64_t active, uint64_t parent_calls)
 {
@@ -578,7 +579,7 @@ static void profile_print_entry(profile_entry *entry,
 }
 
 static void gather_stats_between(profile_times_table *map, 
-		profiler_time_array *entry_buffer,
+		profiler_time_entries_t *entry_buffer,
 		uint64_t lower_bound, uint64_t upper_bound, double *percent,
 		uint64_t *min_, uint64_t *max_,
 		double *lower, double *higher)
@@ -592,7 +593,7 @@ static void gather_stats_between(profile_times_table *map,
 		return;
 	}
 
-	uint64_t calls = copy_map_to_array(map, entry_buffer, min_, max_);
+	uint64_t calls = copy_map_to_array(map, entry_buffer, min_, max_, true);
 
 	uint64_t accu = 0;
 	bool found_upper_bound = false;
@@ -628,7 +629,8 @@ static void gather_stats_between(profile_times_table *map,
 }
 
 static void profile_print_entry_expected(profile_entry *entry,
-		select_times_table get_table, profiler_time_array *entry_buffer,
+		select_times_table get_table,
+		profiler_time_entries_t *entry_buffer,
 		struct dstr *indent_buffer, struct dstr *output_buffer,
 		unsigned indent, uint64_t active, uint64_t parent_calls)
 {
@@ -673,7 +675,7 @@ static void profile_print_entry_expected(profile_entry *entry,
 void profile_print_func(const char *intro, profile_entry_print_func print,
 		select_times_table get_table)
 {
-	profiler_time_array entry_buffer = {0};
+	profiler_time_entries_t entry_buffer = {0};
 	struct dstr indent_buffer = {0};
 	struct dstr output_buffer = {0};
 
@@ -809,4 +811,108 @@ void profile_free_names(void)
 
 	da_free(name_store);
 	pthread_mutex_unlock(&name_store_mutex);
+}
+
+struct profiler_snapshot {
+	DARRAY(profiler_snapshot_entry_t) roots;
+};
+
+struct profiler_snapshot_entry {
+	const char *name;
+	profiler_time_entries_t times;
+	DARRAY(profiler_snapshot_entry_t) children;
+};
+
+static void add_entry_to_snapshot(profile_entry *entry,
+		profiler_snapshot_entry_t *s_entry)
+{
+	s_entry->name = entry->name;
+
+	copy_map_to_array(&entry->times, &s_entry->times, NULL, NULL, false);
+
+	da_reserve(s_entry->children, entry->children.num);
+	for (size_t i = 0; i < entry->children.num; i++)
+		add_entry_to_snapshot(&entry->children.array[i],
+				da_push_back_new(s_entry->children));
+}
+
+profiler_snapshot_t *profile_snapshot_create(void)
+{
+	profiler_snapshot_t *snap = bzalloc(sizeof(profiler_snapshot_t));
+
+	pthread_mutex_lock(&root_mutex);
+	da_reserve(snap->roots, root_entries.num);
+	for (size_t i = 0; i < root_entries.num; i++) {
+		pthread_mutex_lock(root_entries.array[i].mutex);
+		add_entry_to_snapshot(root_entries.array[i].entry,
+				da_push_back_new(snap->roots));
+		pthread_mutex_unlock(root_entries.array[i].mutex);
+	}
+	pthread_mutex_unlock(&root_mutex);
+
+	return snap;
+}
+
+static void free_snapshot_entry(profiler_snapshot_entry_t *entry)
+{
+	for (size_t i = 0; i < entry->children.num; i++)
+		free_snapshot_entry(&entry->children.array[i]);
+
+	da_free(entry->children);
+	da_free(entry->times);
+}
+
+void profile_snapshot_free(profiler_snapshot_t *snap)
+{
+	if (!snap)
+		return;
+
+	for (size_t i = 0; i < snap->roots.num; i++)
+		free_snapshot_entry(&snap->roots.array[i]);
+
+	da_free(snap->roots);
+	bfree(snap);
+}
+
+size_t profiler_snapshot_num_roots(profiler_snapshot_t *snap)
+{
+	return snap ? snap->roots.num : 0;
+}
+
+void profiler_snapshot_enumerate_roots(profiler_snapshot_t *snap,
+		profiler_entry_enum_func func, void *context)
+{
+	if (!snap)
+		return;
+
+	for (size_t i = 0; i < snap->roots.num; i++)
+		if (!func(context, &snap->roots.array[i]))
+			break;
+}
+
+size_t profiler_snapshot_num_children(profiler_snapshot_entry_t *entry)
+{
+	return entry ? entry->children.num : 0;
+}
+
+void profiler_snapshot_enumerate_children(profiler_snapshot_entry_t *entry,
+		profiler_entry_enum_func func, void *context)
+{
+	if (!entry)
+		return;
+
+	for (size_t i = 0; i < entry->children.num; i++)
+		if (!func(context, &entry->children.array[i]))
+			break;
+}
+
+const char *profiler_snapshot_entry_name(profiler_snapshot_entry_t *entry)
+{
+	return entry ? entry->name : NULL;
+}
+
+profiler_time_entries_t *profiler_snapshot_entry_times(
+		profiler_snapshot_entry_t *entry)
+{
+	return entry ? &entry->times : NULL;
 }
