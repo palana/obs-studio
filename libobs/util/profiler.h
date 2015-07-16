@@ -70,6 +70,12 @@ EXPORT const char *profiler_snapshot_entry_name(
 		profiler_snapshot_entry_t *entry);
 EXPORT profiler_time_entries_t *profiler_snapshot_entry_times(
 		profiler_snapshot_entry_t *entry);
+EXPORT uint64_t profiler_snapshot_entry_min_time(
+		profiler_snapshot_entry_t *entry);
+EXPORT uint64_t profiler_snapshot_entry_max_time(
+		profiler_snapshot_entry_t *entry);
+EXPORT uint64_t profiler_snapshot_entry_overall_count(
+		profiler_snapshot_entry_t *entry);
 
 #ifdef __cplusplus
 }

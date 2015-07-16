@@ -828,6 +828,9 @@ struct profiler_snapshot {
 struct profiler_snapshot_entry {
 	const char *name;
 	profiler_time_entries_t times;
+	uint64_t min_time;
+	uint64_t max_time;
+	uint64_t overall_count;
 	DARRAY(profiler_snapshot_entry_t) children;
 };
 
@@ -836,7 +839,9 @@ static void add_entry_to_snapshot(profile_entry *entry,
 {
 	s_entry->name = entry->name;
 
-	copy_map_to_array(&entry->times, &s_entry->times, NULL, NULL, false);
+	s_entry->overall_count = copy_map_to_array(&entry->times,
+			&s_entry->times,
+			&s_entry->min_time, &s_entry->max_time, false);
 
 	da_reserve(s_entry->children, entry->children.num);
 	for (size_t i = 0; i < entry->children.num; i++)
@@ -923,4 +928,20 @@ profiler_time_entries_t *profiler_snapshot_entry_times(
 		profiler_snapshot_entry_t *entry)
 {
 	return entry ? &entry->times : NULL;
+}
+
+uint64_t profiler_snapshot_entry_overall_count(
+		profiler_snapshot_entry_t *entry)
+{
+	return entry ? entry->overall_count : 0;
+}
+
+uint64_t profiler_snapshot_entry_min_time(profiler_snapshot_entry_t *entry)
+{
+	return entry ? entry->min_time : 0;
+}
+
+uint64_t profiler_snapshot_entry_max_time(profiler_snapshot_entry_t *entry)
+{
+	return entry ? entry->max_time : 0;
 }
