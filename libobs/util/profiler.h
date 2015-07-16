@@ -7,6 +7,9 @@
 extern "C" {
 #endif
 
+/* ------------------------------------------------------------------------- */
+/* Profiling */
+
 EXPORT void profile_register_root(const char *name,
 		uint64_t expected_time_between_calls);
 
@@ -19,6 +22,9 @@ EXPORT void profile_print_time_between_calls(void);
 
 EXPORT void profile_free(void);
 
+/* ------------------------------------------------------------------------- */
+/* Profiler name storage */
+
 #ifndef _MSC_VER
 #define PRINTFATTR(f, a) __attribute__((__format__(__printf__, f, a)))
 #else
@@ -30,6 +36,9 @@ EXPORT const char *profile_store_name(const char *format, ...);
 EXPORT void profile_free_names(void);
 
 #undef PRINTFATTR
+
+/* ------------------------------------------------------------------------- */
+/* Profiler data access */
 
 struct profiler_time_entry {
 	uint64_t time_delta;
@@ -64,6 +73,9 @@ EXPORT profiler_time_entries_t *profiler_snapshot_entry_times(
 
 #ifdef __cplusplus
 }
+
+/* ------------------------------------------------------------------------- */
+/* C++ convenience */
 
 struct OBSScopeProfiler {
 	const char *name;

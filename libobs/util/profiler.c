@@ -780,6 +780,10 @@ void profile_free(void)
 	da_free(old_root_entries);
 }
 
+
+/* ------------------------------------------------------------------------- */
+/* Profiler name storage */
+
 static pthread_mutex_t name_store_mutex = PTHREAD_MUTEX_INITIALIZER;
 static DARRAY(char*) name_store;
 
@@ -812,6 +816,10 @@ void profile_free_names(void)
 	da_free(name_store);
 	pthread_mutex_unlock(&name_store_mutex);
 }
+
+
+/* ------------------------------------------------------------------------- */
+/* Profiler data access */
 
 struct profiler_snapshot {
 	DARRAY(profiler_snapshot_entry_t) roots;
