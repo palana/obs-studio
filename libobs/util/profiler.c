@@ -831,6 +831,11 @@ struct profiler_snapshot_entry {
 	uint64_t min_time;
 	uint64_t max_time;
 	uint64_t overall_count;
+	profiler_time_entries_t times_between_calls;
+	uint64_t expected_time_between_calls;
+	uint64_t min_time_between_calls;
+	uint64_t max_time_between_calls;
+	uint64_t overall_between_calls_count;
 	DARRAY(profiler_snapshot_entry_t) children;
 };
 
@@ -842,6 +847,15 @@ static void add_entry_to_snapshot(profile_entry *entry,
 	s_entry->overall_count = copy_map_to_array(&entry->times,
 			&s_entry->times,
 			&s_entry->min_time, &s_entry->max_time, false);
+
+	if ((s_entry->expected_time_between_calls = 
+				entry->expected_time_between_calls))
+		s_entry->overall_between_calls_count =
+			copy_map_to_array(&entry->times_between_calls,
+					&s_entry->times_between_calls,
+					&s_entry->min_time_between_calls,
+					&s_entry->max_time_between_calls,
+					false);
 
 	da_reserve(s_entry->children, entry->children.num);
 	for (size_t i = 0; i < entry->children.num; i++)
@@ -872,6 +886,7 @@ static void free_snapshot_entry(profiler_snapshot_entry_t *entry)
 		free_snapshot_entry(&entry->children.array[i]);
 
 	da_free(entry->children);
+	da_free(entry->times_between_calls);
 	da_free(entry->times);
 }
 
@@ -944,4 +959,34 @@ uint64_t profiler_snapshot_entry_min_time(profiler_snapshot_entry_t *entry)
 uint64_t profiler_snapshot_entry_max_time(profiler_snapshot_entry_t *entry)
 {
 	return entry ? entry->max_time : 0;
+}
+
+profiler_time_entries_t *profiler_snapshot_entry_times_between_calls(
+		profiler_snapshot_entry_t *entry)
+{
+	return entry ? &entry->times_between_calls : NULL;
+}
+
+uint64_t profiler_snapshot_entry_expected_time_between_calls(
+		profiler_snapshot_entry_t *entry)
+{
+	return entry ? entry->expected_time_between_calls : 0;
+}
+
+uint64_t profiler_snapshot_entry_min_time_between_calls(
+		profiler_snapshot_entry_t *entry)
+{
+	return entry ? entry->min_time_between_calls : 0;
+}
+
+uint64_t profiler_snapshot_entry_max_time_between_calls(
+		profiler_snapshot_entry_t *entry)
+{
+	return entry ? entry->max_time_between_calls : 0;
+}
+
+uint64_t profiler_snapshot_entry_overall_between_calls_count(
+		profiler_snapshot_entry_t *entry)
+{
+	return entry ? entry->overall_between_calls_count : 0;
 }

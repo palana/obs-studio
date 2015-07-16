@@ -68,6 +68,7 @@ EXPORT void profiler_snapshot_enumerate_children(
 
 EXPORT const char *profiler_snapshot_entry_name(
 		profiler_snapshot_entry_t *entry);
+
 EXPORT profiler_time_entries_t *profiler_snapshot_entry_times(
 		profiler_snapshot_entry_t *entry);
 EXPORT uint64_t profiler_snapshot_entry_min_time(
@@ -75,6 +76,17 @@ EXPORT uint64_t profiler_snapshot_entry_min_time(
 EXPORT uint64_t profiler_snapshot_entry_max_time(
 		profiler_snapshot_entry_t *entry);
 EXPORT uint64_t profiler_snapshot_entry_overall_count(
+		profiler_snapshot_entry_t *entry);
+
+EXPORT profiler_time_entries_t *profiler_snapshot_entry_times_between_calls(
+		profiler_snapshot_entry_t *entry);
+EXPORT uint64_t profiler_snapshot_entry_expected_time_between_calls(
+		profiler_snapshot_entry_t *entry);
+EXPORT uint64_t profiler_snapshot_entry_min_time_between_calls(
+		profiler_snapshot_entry_t *entry);
+EXPORT uint64_t profiler_snapshot_entry_max_time_between_calls(
+		profiler_snapshot_entry_t *entry);
+EXPORT uint64_t profiler_snapshot_entry_overall_between_calls_count(
 		profiler_snapshot_entry_t *entry);
 
 #ifdef __cplusplus
