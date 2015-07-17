@@ -870,6 +870,22 @@ static void add_entry_to_snapshot(profile_entry *entry,
 				da_push_back_new(s_entry->children));
 }
 
+static void sort_snapshot_entry(profiler_snapshot_entry_t *entry)
+{
+	qsort(entry->times.array, entry->times.num,
+			sizeof(profiler_time_entry),
+			profiler_time_entry_compare);
+
+	if (entry->expected_time_between_calls)
+		qsort(entry->times_between_calls.array,
+				entry->times_between_calls.num,
+				sizeof(profiler_time_entry),
+				profiler_time_entry_compare);
+
+	for (size_t i = 0; i < entry->children.num; i++)
+		sort_snapshot_entry(&entry->children.array[i]);
+}
+
 profiler_snapshot_t *profile_snapshot_create(void)
 {
 	profiler_snapshot_t *snap = bzalloc(sizeof(profiler_snapshot_t));
@@ -883,6 +899,9 @@ profiler_snapshot_t *profile_snapshot_create(void)
 		pthread_mutex_unlock(root_entries.array[i].mutex);
 	}
 	pthread_mutex_unlock(&root_mutex);
+
+	for (size_t i = 0; i < snap->roots.num; i++)
+		sort_snapshot_entry(&snap->roots.array[i]);
 
 	return snap;
 }
