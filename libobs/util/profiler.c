@@ -7,15 +7,21 @@
 
 #include <math.h>
 
+//#define TRACK_OVERHEAD
+
 typedef struct profiler_time_entry profiler_time_entry;
 
 typedef struct profile_call profile_call;
 struct profile_call {
 	const char *name;
+#ifdef TRACK_OVERHEAD
 	uint64_t overhead_start;
+#endif
 	uint64_t start_time;
 	uint64_t end_time;
+#ifdef TRACK_OVERHEAD
 	uint64_t overhead_end;
+#endif
 	uint64_t expected_time_between_calls;
 	DARRAY(profile_call) children;
 	profile_call *parent;
@@ -43,7 +49,9 @@ typedef struct profile_entry profile_entry;
 struct profile_entry {
 	const char *name;
 	profile_times_table times;
+#ifdef TRACK_OVERHEAD
 	profile_times_table overhead;
+#endif
 	uint64_t expected_time_between_calls;
 	profile_times_table times_between_calls;
 	DARRAY(profile_entry) children;
@@ -180,7 +188,9 @@ static profile_entry *init_entry(profile_entry *entry, const char *name)
 {
 	entry->name = name;
 	init_hashmap(&entry->times, 1);
+#ifdef TRACK_OVERHEAD
 	init_hashmap(&entry->overhead, 1);
+#endif
 	entry->expected_time_between_calls = 0;
 	init_hashmap(&entry->times_between_calls, 1);
 	return entry;
@@ -218,10 +228,12 @@ static void merge_call(profile_entry *entry, profile_call *call,
 	uint64_t usec = diff_ns_to_usec(call->start_time, call->end_time);
 	add_hashmap_entry(&entry->times, usec, 1);
 
+#ifdef TRACK_OVERHEAD
 	migrate_old_entries(&entry->overhead, true);
 	usec  = diff_ns_to_usec(call->overhead_start, call->start_time);
 	usec += diff_ns_to_usec(call->end_time, call->overhead_end);
 	add_hashmap_entry(&entry->overhead, usec, 1);
+#endif
 }
 
 static bool enabled = true;
@@ -321,7 +333,9 @@ void profile_start(const char *name)
 
 	profile_call new_call = {
 		.name = name,
+#ifdef TRACK_OVERHEAD
 		.overhead_start = os_gettime_ns(),
+#endif
 		.parent = thread_context,
 	};
 
@@ -375,7 +389,9 @@ void profile_end(const char *name)
 	thread_context = call->parent;
 
 	call->end_time = end;
+#ifdef TRACK_OVERHEAD
 	call->overhead_end = os_gettime_ns();
+#endif
 
 	if (call->parent)
 		return;
@@ -504,11 +520,6 @@ typedef profile_times_table *(*select_times_table)(profile_entry *entry);
 static inline profile_times_table *get_times(profile_entry *entry)
 {
 	return &entry->times;
-}
-
-static inline profile_times_table *get_overhead(profile_entry *entry)
-{
-	return &entry->overhead;
 }
 
 static inline profile_times_table *get_times_between_calls(profile_entry *entry)
@@ -702,12 +713,6 @@ void profile_print(void)
 			profile_print_entry, get_times);
 }
 
-void profile_print_overhead(void)
-{
-	profile_print_func("== Profiler Overhead ============================",
-			profile_print_entry, get_overhead);
-}
-
 void profile_print_time_between_calls(void)
 {
 	profile_print_func("== Profiler Time Between Calls ==================",
@@ -747,7 +752,9 @@ static void free_profile_entry(profile_entry *entry)
 		free_profile_entry(&entry->children.array[i]);
 
 	free_hashmap(&entry->times);
+#ifdef TRACK_OVERHEAD
 	free_hashmap(&entry->overhead);
+#endif
 	free_hashmap(&entry->times_between_calls);
 	da_free(entry->children);
 }

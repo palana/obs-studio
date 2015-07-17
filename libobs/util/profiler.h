@@ -17,7 +17,6 @@ EXPORT void profile_start(const char *name);
 EXPORT void profile_end(const char *name);
 
 EXPORT void profile_print(void);
-EXPORT void profile_print_overhead(void);
 EXPORT void profile_print_time_between_calls(void);
 
 EXPORT void profile_free(void);
