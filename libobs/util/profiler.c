@@ -837,20 +837,20 @@ static void add_entry_to_snapshot(profile_entry *entry,
 				da_push_back_new(s_entry->children));
 }
 
+#define SORT_NAME profiler_time_entry
+#define SORT_TYPE profiler_time_entry_t
+#define SORT_CMP(x, y) ((x).time_delta > (y).time_delta ? -1 : \
+		((x).time_delta == (y).time_delta ? 0 : 1))
+#include "sort.h"
+
 extern void sort_times(profiler_time_entry_t *first,
 		profiler_time_entry_t *last);
 static void sort_snapshot_entry(profiler_snapshot_entry_t *entry)
 {
 	profiler_time_entries_t copy = {0};
+	profiler_time_entries_t copy2 = {0};
 	da_copy(copy, entry->times);
-
-	if (copy.num > 500) {
-		struct dstr out = {0};
-		for (size_t i = 0; i < copy.num; i++)
-			dstr_catf(&out, "%llu, ", copy.array[i].time_delta);
-		blog(LOG_INFO, "unsorted: %s", out.array);
-		dstr_free(&out);
-	}
+	da_copy(copy2, copy);
 
 	uint64_t start = os_gettime_ns();
 	sort_times(copy.array, copy.array + copy.num);
@@ -859,21 +859,20 @@ static void sort_snapshot_entry(profiler_snapshot_entry_t *entry)
 	qsort(entry->times.array, entry->times.num,
 			sizeof(profiler_time_entry),
 			profiler_time_entry_compare);
-	blog(LOG_INFO, "sort for %s took %g ms (qsort) <-> %g ms (std::sort) "
+
+	uint64_t start3 = os_gettime_ns();
+	profiler_time_entry_quick_sort(copy2.array, copy2.num);
+	uint64_t end = os_gettime_ns();
+
+	blog(LOG_INFO, "sort for %s took %g ms (qs) <-> %g ms (qsort) <-> %g ms (std::sort) "
 			"for %zu items",
 			entry->name,
-			(os_gettime_ns() - start2) / 1000000.,
+			(end - start3) / 1000000.,
+			(start3 - start2) / 1000000.,
 			(start2 - start) / 1000000.,
 			copy.num);
 
-	if (copy.num > 500) {
-		struct dstr out = {0};
-		for (size_t i = 0; i < copy.num; i++)
-			dstr_catf(&out, "%llu, ", copy.array[i].time_delta);
-		blog(LOG_INFO, "sorted: %s", out.array);
-		dstr_free(&out);
-	}
-
+	da_free(copy2);
 	da_free(copy);
 
 	if (entry->expected_time_between_calls)
