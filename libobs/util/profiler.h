@@ -7,6 +7,10 @@
 extern "C" {
 #endif
 
+typedef struct profiler_snapshot profiler_snapshot_t;
+typedef struct profiler_snapshot_entry profiler_snapshot_entry_t;
+typedef struct profiler_time_entry profiler_time_entry_t;
+
 /* ------------------------------------------------------------------------- */
 /* Profiling */
 
@@ -16,8 +20,8 @@ EXPORT void profile_register_root(const char *name,
 EXPORT void profile_start(const char *name);
 EXPORT void profile_end(const char *name);
 
-EXPORT void profile_print(void);
-EXPORT void profile_print_time_between_calls(void);
+EXPORT void profile_print(profiler_snapshot_t *snap);
+EXPORT void profile_print_time_between_calls(profiler_snapshot_t *snap);
 
 EXPORT void profile_free(void);
 
@@ -43,10 +47,6 @@ struct profiler_time_entry {
 	uint64_t time_delta;
 	uint64_t count;
 };
-
-typedef struct profiler_snapshot profiler_snapshot_t;
-typedef struct profiler_snapshot_entry profiler_snapshot_entry_t;
-typedef struct profiler_time_entry profiler_time_entry_t;
 
 typedef DARRAY(profiler_time_entry_t) profiler_time_entries_t;
 

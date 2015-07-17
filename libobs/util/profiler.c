@@ -9,6 +9,24 @@
 
 //#define TRACK_OVERHEAD
 
+struct profiler_snapshot {
+	DARRAY(profiler_snapshot_entry_t) roots;
+};
+
+struct profiler_snapshot_entry {
+	const char *name;
+	profiler_time_entries_t times;
+	uint64_t min_time;
+	uint64_t max_time;
+	uint64_t overall_count;
+	profiler_time_entries_t times_between_calls;
+	uint64_t expected_time_between_calls;
+	uint64_t min_time_between_calls;
+	uint64_t max_time_between_calls;
+	uint64_t overall_between_calls_count;
+	DARRAY(profiler_snapshot_entry_t) children;
+};
+
 typedef struct profiler_time_entry profiler_time_entry;
 
 typedef struct profile_call profile_call;
@@ -408,7 +426,7 @@ static int profiler_time_entry_compare(const void *first, const void *second)
 
 static uint64_t copy_map_to_array(profile_times_table *map,
 		profiler_time_entries_t *entry_buffer,
-		uint64_t *min_, uint64_t *max_, bool sort)
+		uint64_t *min_, uint64_t *max_)
 {
 	migrate_old_entries(map, false);
 
@@ -437,30 +455,19 @@ static uint64_t copy_map_to_array(profile_times_table *map,
 	if (max_)
 		*max_ = max__;
 
-	if (sort)
-		qsort(entry_buffer->array, entry_buffer->num,
-				sizeof(profiler_time_entry),
-				profiler_time_entry_compare);
-
 	return calls;
 }
 
 static void gather_stats(uint64_t expected_time_between_calls,
-		profile_times_table *map,
-		profiler_time_entries_t *entry_buffer,
-		uint64_t *calls,
-		uint64_t *min_, uint64_t *max_, uint64_t *percentile99,
+		profiler_time_entries_t *entries,
+		uint64_t calls, uint64_t *percentile99,
 		double *percent_within_bounds)
 {
-	if (!map->occupied) {
-		*min_ = 0;
-		*max_ = 0;
+	if (!entries->num) {
 		*percentile99 = 0;
 		*percent_within_bounds = 0.;
 		return;
 	}
-
-	*calls = copy_map_to_array(map, entry_buffer, min_, max_, true);
 
 	/*if (entry_buffer->num > 2)
 		blog(LOG_INFO, "buffer-size %lu, overall count %llu\n"
@@ -469,12 +476,12 @@ static void gather_stats(uint64_t expected_time_between_calls,
 				map->size, map->occupied,
 				map->max_probe_count);*/
 	uint64_t accu = 0;
-	for (size_t i = 0; i < entry_buffer->num; i++) {
-		accu += entry_buffer->array[i].count;
-		if (accu < *calls * 0.01)
+	for (size_t i = 0; i < entries->num; i++) {
+		accu += entries->array[i].count;
+		if (accu < calls * 0.01)
 			continue;
 
-		*percentile99 = entry_buffer->array[i].time_delta;
+		*percentile99 = entries->array[i].time_delta;
 		break;
 	}
 
@@ -483,14 +490,14 @@ static void gather_stats(uint64_t expected_time_between_calls,
 		return;
 
 	accu = 0;
-	for (size_t i = 0; i < entry_buffer->num; i++) {
-		profiler_time_entry *entry = &entry_buffer->array[i];
+	for (size_t i = 0; i < entries->num; i++) {
+		profiler_time_entry *entry = &entries->array[i];
 		if (entry->time_delta < expected_time_between_calls)
 			break;
 
 		accu += entry->count;
 	}
-	*percent_within_bounds = (1. - (double)accu / *calls) * 100;
+	*percent_within_bounds = (1. - (double)accu / calls) * 100;
 }
 
 static void make_indent_string(struct dstr *indent_buffer, unsigned indent,
@@ -515,38 +522,22 @@ static void make_indent_string(struct dstr *indent_buffer, unsigned indent,
 	}
 }
 
-typedef profile_times_table *(*select_times_table)(profile_entry *entry);
-
-static inline profile_times_table *get_times(profile_entry *entry)
-{
-	return &entry->times;
-}
-
-static inline profile_times_table *get_times_between_calls(profile_entry *entry)
-{
-	return &entry->times_between_calls;
-}
-
-typedef void (*profile_entry_print_func)(profile_entry *entry,
-		select_times_table get_table,
-		profiler_time_entries_t *entry_buffer,
+typedef void (*profile_entry_print_func)(profiler_snapshot_entry_t *entry,
 		struct dstr *indent_buffer, struct dstr *output_buffer,
 		unsigned indent, uint64_t active, uint64_t parent_calls);
 
-static void profile_print_entry(profile_entry *entry,
-		select_times_table get_table,
-		profiler_time_entries_t *entry_buffer,
+static void profile_print_entry(profiler_snapshot_entry_t *entry,
 		struct dstr *indent_buffer, struct dstr *output_buffer,
 		unsigned indent, uint64_t active, uint64_t parent_calls)
 {
-	uint64_t calls = 0;
-	uint64_t min_ = 0;
-	uint64_t max_ = 0;
+	uint64_t calls = entry->overall_count;
+	uint64_t min_ = entry->min_time;
+	uint64_t max_ = entry->max_time;
 	uint64_t percentile99 = 0;
 	double percent_within_bounds = 0.;
 	gather_stats(entry->expected_time_between_calls,
-			get_table(entry), entry_buffer, &calls,
-			&min_, &max_, &percentile99, &percent_within_bounds);
+			&entry->times, calls,
+			&percentile99, &percent_within_bounds);
 
 	make_indent_string(indent_buffer, indent, active);
 
@@ -583,19 +574,18 @@ static void profile_print_entry(profile_entry *entry,
 		if ((i + 1) == entry->children.num)
 			active &= (1 << indent) - 1;
 		profile_print_entry(&entry->children.array[i],
-				get_table, entry_buffer,
 				indent_buffer, output_buffer,
 				indent + 1, active, calls);
 	}
 }
 
-static void gather_stats_between(profile_times_table *map, 
-		profiler_time_entries_t *entry_buffer,
-		uint64_t lower_bound, uint64_t upper_bound, double *percent,
+static void gather_stats_between(profiler_time_entries_t *entries,
+		uint64_t calls, uint64_t lower_bound, uint64_t upper_bound,
+		double *percent,
 		uint64_t *min_, uint64_t *max_,
 		double *lower, double *higher)
 {
-	if (!map->occupied) {
+	if (!entries->num) {
 		*percent = 0.;
 		*min_ = 0;
 		*max_ = 0;
@@ -604,13 +594,11 @@ static void gather_stats_between(profile_times_table *map,
 		return;
 	}
 
-	uint64_t calls = copy_map_to_array(map, entry_buffer, min_, max_, true);
-
 	uint64_t accu = 0;
 	bool found_upper_bound = false;
 	bool found_lower_bound = false;
-	for (size_t i = 0; i < entry_buffer->num; i++) {
-		uint64_t delta = entry_buffer->array[i].time_delta;
+	for (size_t i = 0; i < entries->num; i++) {
+		uint64_t delta = entries->array[i].time_delta;
 
 		if (!found_upper_bound && delta <= upper_bound) {
 			*higher = (double)accu / calls * 100;
@@ -624,7 +612,7 @@ static void gather_stats_between(profile_times_table *map,
 			found_lower_bound = true;
 		}
 
-		accu += entry_buffer->array[i].count;
+		accu += entries->array[i].count;
 	}
 
 	if (!found_upper_bound)
@@ -639,9 +627,7 @@ static void gather_stats_between(profile_times_table *map,
 	}
 }
 
-static void profile_print_entry_expected(profile_entry *entry,
-		select_times_table get_table,
-		profiler_time_entries_t *entry_buffer,
+static void profile_print_entry_expected(profiler_snapshot_entry_t *entry,
 		struct dstr *indent_buffer, struct dstr *output_buffer,
 		unsigned indent, uint64_t active, uint64_t parent_calls)
 {
@@ -652,12 +638,13 @@ static void profile_print_entry_expected(profile_entry *entry,
 
 	uint64_t expected_time = entry->expected_time_between_calls;
 
-	uint64_t min_ = 0;
-	uint64_t max_ = 0;
+	uint64_t min_ = entry->min_time_between_calls;
+	uint64_t max_ = entry->max_time_between_calls;
 	double percent = 0.;
 	double lower = 0.;
 	double higher = 0.;
-	gather_stats_between(get_table(entry), entry_buffer,
+	gather_stats_between(&entry->times_between_calls,
+			entry->overall_between_calls_count,
 			(uint64_t)(expected_time * 0.98),
 			(uint64_t)(expected_time * 1.02 + 0.5),
 			&percent,
@@ -677,46 +664,45 @@ static void profile_print_entry_expected(profile_entry *entry,
 		if ((i + 1) == entry->children.num)
 			active &= (1 << indent) - 1;
 		profile_print_entry_expected(&entry->children.array[i],
-				get_table, entry_buffer,
 				indent_buffer, output_buffer,
 				indent + 1, active, 0);
 	}
 }
 
 void profile_print_func(const char *intro, profile_entry_print_func print,
-		select_times_table get_table)
+		profiler_snapshot_t *snap)
 {
-	profiler_time_entries_t entry_buffer = {0};
 	struct dstr indent_buffer = {0};
 	struct dstr output_buffer = {0};
 
-	pthread_mutex_lock(&root_mutex);
+	bool free_snapshot = !snap;
+	if (!snap)
+		snap = profile_snapshot_create();
+
 	blog(LOG_INFO, "%s", intro);
-	for (size_t i = 0; i < root_entries.num; i++) {
-		pthread_mutex_lock(root_entries.array[i].mutex);
-		print(root_entries.array[i].entry, get_table,
-				&entry_buffer, &indent_buffer, &output_buffer,
-				0, 0, 0);
-		pthread_mutex_unlock(root_entries.array[i].mutex);
+	for (size_t i = 0; i < snap->roots.num; i++) {
+		print(&snap->roots.array[i],
+				&indent_buffer, &output_buffer, 0, 0, 0);
 	}
 	blog(LOG_INFO, "=================================================");
-	pthread_mutex_unlock(&root_mutex);
+
+	if (free_snapshot)
+		profile_snapshot_free(snap);
 
 	dstr_free(&output_buffer);
 	dstr_free(&indent_buffer);
-	da_free(entry_buffer);
 }
 
-void profile_print(void)
+void profile_print(profiler_snapshot_t *snap)
 {
 	profile_print_func("== Profiler Results =============================",
-			profile_print_entry, get_times);
+			profile_print_entry, snap);
 }
 
-void profile_print_time_between_calls(void)
+void profile_print_time_between_calls(profiler_snapshot_t *snap)
 {
 	profile_print_func("== Profiler Time Between Calls ==================",
-			profile_print_entry_expected, get_times_between_calls);
+			profile_print_entry_expected, snap);
 }
 
 static void free_call_children(profile_call *call)
@@ -828,24 +814,6 @@ void profile_free_names(void)
 /* ------------------------------------------------------------------------- */
 /* Profiler data access */
 
-struct profiler_snapshot {
-	DARRAY(profiler_snapshot_entry_t) roots;
-};
-
-struct profiler_snapshot_entry {
-	const char *name;
-	profiler_time_entries_t times;
-	uint64_t min_time;
-	uint64_t max_time;
-	uint64_t overall_count;
-	profiler_time_entries_t times_between_calls;
-	uint64_t expected_time_between_calls;
-	uint64_t min_time_between_calls;
-	uint64_t max_time_between_calls;
-	uint64_t overall_between_calls_count;
-	DARRAY(profiler_snapshot_entry_t) children;
-};
-
 static void add_entry_to_snapshot(profile_entry *entry,
 		profiler_snapshot_entry_t *s_entry)
 {
@@ -853,7 +821,7 @@ static void add_entry_to_snapshot(profile_entry *entry,
 
 	s_entry->overall_count = copy_map_to_array(&entry->times,
 			&s_entry->times,
-			&s_entry->min_time, &s_entry->max_time, false);
+			&s_entry->min_time, &s_entry->max_time);
 
 	if ((s_entry->expected_time_between_calls = 
 				entry->expected_time_between_calls))
@@ -861,8 +829,7 @@ static void add_entry_to_snapshot(profile_entry *entry,
 			copy_map_to_array(&entry->times_between_calls,
 					&s_entry->times_between_calls,
 					&s_entry->min_time_between_calls,
-					&s_entry->max_time_between_calls,
-					false);
+					&s_entry->max_time_between_calls);
 
 	da_reserve(s_entry->children, entry->children.num);
 	for (size_t i = 0; i < entry->children.num; i++)

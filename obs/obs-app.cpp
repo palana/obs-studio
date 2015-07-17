@@ -856,9 +856,12 @@ static int run_program(fstream &logFile, int argc, char *argv[])
 
 	auto ProfileRelease = [](void *)
 	{
-		profile_print();
-		profile_print_overhead();
-		profile_print_time_between_calls();
+		profiler_snapshot_t *snap = profile_snapshot_create();
+
+		profile_print(snap);
+		profile_print_time_between_calls(snap);
+
+		profile_snapshot_free(snap);
 		profile_free();
 		profile_free_names();
 	};
@@ -885,7 +888,7 @@ static int run_program(fstream &logFile, int argc, char *argv[])
 			return 0;
 
 		prof.Stop();
-		profile_print();
+		profile_print(NULL);
 		return program.exec();
 
 	} catch (const char *error) {
