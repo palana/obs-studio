@@ -856,9 +856,16 @@ static int run_program(fstream &logFile, int argc, char *argv[])
 
 	auto ProfileRelease = [](void *)
 	{
+		uint64_t start = os_gettime_ns();
 		profiler_snapshot_t *snap = profile_snapshot_create();
+		blog(LOG_INFO, "took %g ms",
+				(os_gettime_ns() - start) / 1000000.);
 
+		start = os_gettime_ns();
 		profile_print(snap);
+		blog(LOG_INFO, "took %g ms",
+				(os_gettime_ns() - start) / 1000000.);
+
 		profile_print_time_between_calls(snap);
 
 		profile_snapshot_free(snap);

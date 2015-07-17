@@ -199,6 +199,7 @@ set(libobs_util_SOURCES
 	util/utf8.c
 	util/text-lookup.c
 	util/cf-parser.c
+	util/profiler.cpp
 	util/profiler.c)
 set(libobs_util_HEADERS
 	util/array-serializer.h

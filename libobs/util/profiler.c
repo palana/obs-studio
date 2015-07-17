@@ -837,11 +837,44 @@ static void add_entry_to_snapshot(profile_entry *entry,
 				da_push_back_new(s_entry->children));
 }
 
+extern void sort_times(profiler_time_entry_t *first,
+		profiler_time_entry_t *last);
 static void sort_snapshot_entry(profiler_snapshot_entry_t *entry)
 {
+	profiler_time_entries_t copy = {0};
+	da_copy(copy, entry->times);
+
+	if (copy.num > 500) {
+		struct dstr out = {0};
+		for (size_t i = 0; i < copy.num; i++)
+			dstr_catf(&out, "%llu, ", copy.array[i].time_delta);
+		blog(LOG_INFO, "unsorted: %s", out.array);
+		dstr_free(&out);
+	}
+
+	uint64_t start = os_gettime_ns();
+	sort_times(copy.array, copy.array + copy.num);
+
+	uint64_t start2 = os_gettime_ns();
 	qsort(entry->times.array, entry->times.num,
 			sizeof(profiler_time_entry),
 			profiler_time_entry_compare);
+	blog(LOG_INFO, "sort for %s took %g ms (qsort) <-> %g ms (std::sort) "
+			"for %zu items",
+			entry->name,
+			(os_gettime_ns() - start2) / 1000000.,
+			(start2 - start) / 1000000.,
+			copy.num);
+
+	if (copy.num > 500) {
+		struct dstr out = {0};
+		for (size_t i = 0; i < copy.num; i++)
+			dstr_catf(&out, "%llu, ", copy.array[i].time_delta);
+		blog(LOG_INFO, "sorted: %s", out.array);
+		dstr_free(&out);
+	}
+
+	da_free(copy);
 
 	if (entry->expected_time_between_calls)
 		qsort(entry->times_between_calls.array,
@@ -857,6 +890,8 @@ profiler_snapshot_t *profile_snapshot_create(void)
 {
 	profiler_snapshot_t *snap = bzalloc(sizeof(profiler_snapshot_t));
 
+	uint64_t start = os_gettime_ns();
+
 	pthread_mutex_lock(&root_mutex);
 	da_reserve(snap->roots, root_entries.num);
 	for (size_t i = 0; i < root_entries.num; i++) {
@@ -866,6 +901,10 @@ profiler_snapshot_t *profile_snapshot_create(void)
 		pthread_mutex_unlock(root_entries.array[i].mutex);
 	}
 	pthread_mutex_unlock(&root_mutex);
+
+	blog(LOG_INFO, "gather took %g ms",
+			(os_gettime_ns() - start) / 1000000.);
+
 
 	for (size_t i = 0; i < snap->roots.num; i++)
 		sort_snapshot_entry(&snap->roots.array[i]);
