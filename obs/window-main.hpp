@@ -2,6 +2,7 @@
 
 #include <QMainWindow>
 
+#include <obs.hpp>
 #include <util/config-file.h>
 
 class OBSMainWindow : public QMainWindow {

@@ -38,15 +38,8 @@ void OBSProjector::Init(int monitor)
 	if (source)
 		obs_source_inc_showing(source);
 
-	struct gs_init_data gid = {};
-	gid.cx                  = mi.cx;
-	gid.cy                  = mi.cy;
-	gid.format              = GS_RGBA;
-	QTToGSWindow(winId(), gid.window);
-
-	display = obs_display_create(&gid);
-	obs_display_set_background_color(display, 0x000000);
-	obs_display_add_draw_callback(display, OBSRender, this);
+	obs_display_set_background_color(GetDisplay(), 0x000000);
+	obs_display_add_draw_callback(GetDisplay(), OBSRender, this);
 
 	QAction *action = new QAction(this);
 	action->setShortcut(Qt::Key_Escape);

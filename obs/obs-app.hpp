@@ -59,6 +59,7 @@ private:
 	std::string		       theme;
 	ConfigFile                     globalConfig;
 	TextLookup                     textLookup;
+	OBSContext                     obsContext;
 	QPointer<OBSMainWindow>        mainWindow;
 
 	bool InitGlobalConfig();
