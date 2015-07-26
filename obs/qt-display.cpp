@@ -22,19 +22,7 @@ OBSQTDisplay::OBSQTDisplay(QWidget *parent, Qt::WindowFlags flags)
 			return;
 
 		if (!display) {
-			QSize size = GetPixelSize(this);
-
-			gs_init_data info      = {};
-			info.cx                = size.width();
-			info.cy                = size.height();
-			info.format            = GS_RGBA;
-			info.zsformat          = GS_ZS_NONE;
-
-			QTToGSWindow(winId(), info.window);
-
-			display = obs_display_create(&info);
-
-			emit DisplayCreated(this);
+			CreateDisplay();
 		} else {
 			QSize size = GetPixelSize(this);
 			obs_display_resize(display, size.width(), size.height());
@@ -43,6 +31,8 @@ OBSQTDisplay::OBSQTDisplay(QWidget *parent, Qt::WindowFlags flags)
 
 	auto sizeChanged = [this] (QScreen*)
 	{
+		CreateDisplay();
+
 		QSize size = GetPixelSize(this);
 		obs_display_resize(display, size.width(), size.height());
 	};
@@ -51,15 +41,45 @@ OBSQTDisplay::OBSQTDisplay(QWidget *parent, Qt::WindowFlags flags)
 	connect(windowHandle(), &QWindow::screenChanged, sizeChanged);
 }
 
+void OBSQTDisplay::CreateDisplay()
+{
+	if (display || !windowHandle()->isExposed())
+		return;
+
+	QSize size = GetPixelSize(this);
+
+	gs_init_data info      = {};
+	info.cx                = size.width();
+	info.cy                = size.height();
+	info.format            = GS_RGBA;
+	info.zsformat          = GS_ZS_NONE;
+
+	QTToGSWindow(winId(), info.window);
+
+	display = obs_display_create(&info);
+
+	emit DisplayCreated(this);
+}
+
 void OBSQTDisplay::resizeEvent(QResizeEvent *event)
 {
-	emit DisplayResized();
 	QWidget::resizeEvent(event);
+
+	CreateDisplay();
 
 	if (isVisible() && display) {
 		QSize size = GetPixelSize(this);
 		obs_display_resize(display, size.width(), size.height());
 	}
+
+	emit DisplayResized();
+}
+
+void OBSQTDisplay::paintEvent(QPaintEvent *event)
+{
+	CreateDisplay();
+
+	QWidget::paintEvent(event);
 }
 
 QPaintEngine *OBSQTDisplay::paintEngine() const

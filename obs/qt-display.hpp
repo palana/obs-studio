@@ -8,7 +8,10 @@ class OBSQTDisplay : public QWidget {
 
 	OBSDisplay display;
 
+	void CreateDisplay();
+
 	void resizeEvent(QResizeEvent *event) override;
+	void paintEvent(QPaintEvent *event) override;
 
 signals:
 	void DisplayCreated(OBSQTDisplay *window);
