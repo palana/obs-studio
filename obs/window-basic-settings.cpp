@@ -1155,6 +1155,30 @@ static void SelectFormat(QComboBox *combo, const char *name,
 	combo->setCurrentIndex(0);
 }
 
+static void CheckFormats(QComboBox *formats, bool recording)
+{
+	QStandardItemModel *model =
+		dynamic_cast<QStandardItemModel*>(formats->model());
+	if (!model)
+		return;
+
+	int size = formats->count();
+	for (int i = 0; i < size; i++) {
+		QVariant var = formats->itemData(i);
+		if (var.isNull())
+			continue;
+
+		auto desc = var.value<FormatDesc>();
+		bool available = !recording ||
+			!!ff_format_desc_extensions(desc.desc);
+
+		QStandardItem *item = model->item(i);
+		item->setFlags(available ?
+				Qt::ItemIsSelectable | Qt::ItemIsEnabled :
+				Qt::NoItemFlags);
+	}
+}
+
 static void SelectEncoder(QComboBox *combo, const char *name, int id)
 {
 	int idx = FindEncoder(combo, name, id);
@@ -1202,6 +1226,7 @@ void OBSBasicSettings::LoadAdvOutputFFmpegSettings()
 	ui->advOutFFRecPath->setText(QT_UTF8(path));
 	ui->advOutFFURL->setText(QT_UTF8(url));
 	SelectFormat(ui->advOutFFFormat, format, mimeType);
+	CheckFormats(ui->advOutFFFormat, saveFile);
 	ui->advOutFFMCfg->setText(muxCustom);
 	ui->advOutFFVBitrate->setValue(videoBitrate);
 	ui->advOutFFUseRescale->setChecked(rescale);
@@ -2442,6 +2467,11 @@ void OBSBasicSettings::on_advOutRecEncoder_currentIndexChanged(int idx)
 				"recordEncoder.json", true);
 		ui->advOutRecStandard->layout()->addWidget(recordEncoderProps);
 	}
+}
+
+void OBSBasicSettings::on_advOutFFType_currentIndexChanged(int idx)
+{
+	CheckFormats(ui->advOutFFFormat, idx == 0);
 }
 
 #define DEFAULT_CONTAINER_STR \
