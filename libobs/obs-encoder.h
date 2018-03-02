@@ -83,14 +83,26 @@ struct encoder_packet {
 
 /** Encoder input frame */
 struct encoder_frame {
-	/** Data for the frame/audio */
-	uint8_t               *data[MAX_AV_PLANES];
+	bool                  is_texture;
 
-	/** size of each plane */
-	uint32_t              linesize[MAX_AV_PLANES];
+	union {
+		struct {
+			/** Data for the frame/audio */
+			uint8_t             *data[MAX_AV_PLANES];
 
-	/** Number of frames (audio only) */
-	uint32_t              frames;
+			/** size of each plane */
+			uint32_t            linesize[MAX_AV_PLANES];
+
+			/** Number of frames (audio only) */
+			uint32_t            frames;
+		};
+		struct {
+			gs_texture_t        *tex;
+			uint32_t            plane_offsets[3];
+			uint32_t            plane_sizes[3];
+			uint32_t            plane_linewidth[3];
+		};
+	};
 
 	/** Presentation timestamp */
 	int64_t               pts;

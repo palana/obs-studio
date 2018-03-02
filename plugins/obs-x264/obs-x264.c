@@ -673,6 +673,7 @@ static void obs_x264_video_info(void *data, struct video_scale_info *info)
 {
 	UNUSED_PARAMETER(data);
 
+	info->texture_output = false;
 	if (!valid_format(info->format))
 		info->format = VIDEO_FORMAT_NV12;
 }

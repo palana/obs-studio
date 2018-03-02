@@ -146,7 +146,6 @@ static inline void get_video_info(struct obs_encoder *encoder,
 	if (encoder->video_conversion_set)
 		*info = encoder->video_conversion;
 
-	info->texture_output = false;
 	if (encoder->info.get_video_info)
 		encoder->info.get_video_info(encoder->context.data, info);
 }
@@ -772,26 +771,46 @@ static void receive_video(void *param, struct video_data_container *container)
 
 	struct obs_encoder    *encoder  = param;
 	struct video_data     *frame    = video_data_from_container(container);
+	struct video_texture  *tex      = video_texture_from_container(container);
 	struct encoder_frame  enc_frame;
 
 	memset(&enc_frame, 0, sizeof(struct encoder_frame));
 
-	for (size_t i = 0; i < MAX_AV_PLANES; i++) {
-		enc_frame.data[i]     = frame->data[i];
-		enc_frame.linesize[i] = frame->linesize[i];
-	}
+	enc_frame.pts = encoder->cur_pts;
 
-	if (!encoder->start_ts)
-		encoder->start_ts = frame->timestamp;
+	if (frame) {
+		if (!encoder->start_ts)
+			encoder->start_ts = frame->timestamp;
 
-	enc_frame.frames = 1;
-	enc_frame.pts    = encoder->cur_pts;
+		for (size_t i = 0; i < MAX_AV_PLANES; i++) {
+			enc_frame.data[i] = frame->data[i];
+			enc_frame.linesize[i] = frame->linesize[i];
+		}
 
-	if (frame->tracked_id) {
-		struct tracked_frame *tf =
-			da_push_back_new(encoder->tracked_frames);
-		tf->pts = enc_frame.pts;
-		tf->tracked_id = frame->tracked_id;
+		enc_frame.frames = 1;
+
+		if (frame->tracked_id) {
+			struct tracked_frame *tf =
+				da_push_back_new(encoder->tracked_frames);
+			tf->pts = enc_frame.pts;
+			tf->tracked_id = frame->tracked_id;
+		}
+	} else if (tex) {
+		if (!encoder->start_ts)
+			encoder->start_ts = tex->timestamp;
+
+		enc_frame.is_texture = true;
+		enc_frame.tex = tex->tex;
+		memcpy(enc_frame.plane_offsets, tex->plane_offsets, sizeof(tex->plane_offsets));
+		memcpy(enc_frame.plane_sizes, tex->plane_sizes, sizeof(tex->plane_sizes));
+		memcpy(enc_frame.plane_linewidth, tex->plane_linewidth, sizeof(tex->plane_linewidth));
+
+		if (tex->tracked_id) {
+			struct tracked_frame *tf =
+				da_push_back_new(encoder->tracked_frames);
+			tf->pts = enc_frame.pts;
+			tf->tracked_id = tex->tracked_id;
+		}
 	}
 
 	do_encode(encoder, &enc_frame);

@@ -535,6 +535,7 @@ static void obs_qsv_video_info(void *data, struct video_scale_info *info)
 {
 	UNUSED_PARAMETER(data);
 
+	info->texture_output = false;
 	info->format = VIDEO_FORMAT_NV12;
 	cap_resolution(&info->width, &info->height);
 }
