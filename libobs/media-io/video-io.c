@@ -34,7 +34,12 @@ extern profiler_name_store_t *obs_get_profiler_name_store(void);
 struct video_data_container {
 	volatile long refs;
 
-	struct video_data data;
+	bool using_texture;
+	obs_output_texture_t *texture;
+	union {
+		struct video_data data;
+		struct video_texture tex;
+	};
 };
 
 struct cached_video_data {
@@ -62,6 +67,9 @@ struct video_input {
 	void (*callback)(void *param, struct video_data_container *container);
 	void *param;
 };
+
+void obs_output_texture_addref(obs_output_texture_t *tex);
+void obs_output_texture_release(obs_output_texture_t *tex);
 
 static inline void video_input_free(struct video_input *input)
 {
@@ -101,12 +109,22 @@ struct video_output {
 
 /* ------------------------------------------------------------------------- */
 
+static bool container_contains(struct video_data_container *container, struct video_scale_info *info)
+{
+	struct video_scale_info *container_info;
+	if (info->texture_output)
+		container_info = &container->tex.info;
+	else
+		container_info = &container->data.info;
+	return memcmp(container_info, info, sizeof(*info)) == 0;
+}
+
 static struct cached_video_data *find_frame(struct cached_frame_info *cfi, struct video_scale_info *info)
 {
 	for (size_t i = 0; i < cfi->frames.num; i++) {
 		if (!info->gpu_conversion && !cfi->frames.array[i].container->data.info.gpu_conversion)
 			return cfi->frames.array + i;
-		if (memcmp(&cfi->frames.array[i].container->data.info, info, sizeof(*info)) == 0)
+		if (container_contains(cfi->frames.array[i].container, info))
 			return cfi->frames.array + i;
 	}
 
@@ -213,11 +231,24 @@ static inline bool video_output_cur_frame(struct video_output *video)
 		if (++video->available_frames == video->info.cache_size)
 			video->last_added = video->first_added;
 
+		for (size_t i = 0; i < frame_info->frames.num; i++) {
+			struct cached_video_data *frame = frame_info->frames.array + i;
+			if (frame->container->refs == 0 && frame->container->texture) {
+				obs_output_texture_release(frame->container->texture);
+				frame->container->texture = NULL;
+			}
+		}
+
 	} else {
 		for (size_t i = 0; i < frame_info->frames.num; i++) {
 			struct cached_video_data *frame = frame_info->frames.array + i;
-			frame->container->data.timestamp += video->frame_time;
-			frame->container->data.tracked_id = 0;
+			if (frame->container->texture) {
+				frame->container->tex.timestamp += video->frame_time;
+				frame->container->tex.tracked_id = 0;
+			} else {
+				frame->container->data.timestamp += video->frame_time;
+				frame->container->data.tracked_id = 0;
+			}
 		}
 		++video->skipped_frames;
 	}
@@ -624,26 +655,25 @@ video_locked_frame video_output_lock_frame(video_t *video,
 	return cfi;
 }
 
-static struct video_data_container *get_container(video_t *video, struct video_scale_info *info)
+static struct video_data_container *alloc_container(struct video_scale_info *info)
 {
 	struct video_data_container *container = bzalloc(sizeof(*container));
 
-	container->data.info = *info;
-	alloc_frame(&container->data);
+	if (info->texture_output)
+		container->tex.info = *info;
+	else {
+		container->data.info = *info;
+		alloc_frame(&container->data);
+	}
 
 	return container;
 }
 
-bool video_output_get_frame_buffer(video_t *video,
-	struct video_frame *frame, struct video_scale_info *info, video_locked_frame locked, bool expiring)
+static struct cached_video_data *add_data(struct cached_frame_info *cfi, struct video_scale_info *info, bool expiring)
 {
-	if (!locked || !info) return false;
-
-	struct cached_frame_info *cfi = locked;
-
 	struct cached_video_data *data = NULL;
 	for (size_t i = 0; i < cfi->frames.num; i++) {
-		if (memcmp(info, &cfi->frames.array[i].container->data.info, sizeof(*info)) != 0)
+		if (!container_contains(cfi->frames.array[i].container, info))
 			continue;
 
 		cfi->frames_written |= 1 << i;
@@ -651,6 +681,9 @@ bool video_output_get_frame_buffer(video_t *video,
 		if (data->container->refs > 0) {
 			video_data_container_release(data->container);
 			data->container = NULL;
+		} else if (data->container->refs == 0 && data->container->texture) {
+			obs_output_texture_release(data->container->texture);
+			data->container->texture = NULL;
 		}
 	}
 
@@ -660,13 +693,50 @@ bool video_output_get_frame_buffer(video_t *video,
 	}
 
 	if (!data->container)
-		data->container = get_container(video, info);
+		data->container = alloc_container(info);
+
+	data->expiring = expiring;
+
+	return data;
+}
+
+bool video_output_get_frame_buffer(video_t *video,
+	struct video_frame *frame, struct video_scale_info *info, video_locked_frame locked, bool expiring)
+{
+	if (!locked || !info || info->texture_output) return false;
+
+	struct cached_frame_info *cfi = locked;
+
+	struct cached_video_data *data = add_data(cfi, info, expiring);
 
 	data->container->data.timestamp = cfi->timestamp;
 	data->container->data.tracked_id = cfi->tracked_id;
-	data->expiring = expiring;
 
 	memcpy(frame, &data->container->data, sizeof(*frame));
+	return true;
+}
+
+bool video_output_add_texture(video_t *video, obs_output_texture_t *output_tex,
+	struct video_texture *video_tex, struct video_scale_info *info, video_locked_frame locked, bool expiring)
+{
+	if (!locked || !info || !info->texture_output) return false;
+
+	struct cached_frame_info *cfi = locked;
+
+	struct cached_video_data *data = add_data(cfi, info, expiring);
+
+	obs_output_texture_addref(output_tex);
+	data->container->using_texture = true;
+	data->container->texture = output_tex;
+
+	data->container->tex.timestamp = cfi->timestamp;
+	data->container->tex.tracked_id = cfi->tracked_id;
+
+	data->container->tex.tex = video_tex->tex;
+	memcpy(data->container->tex.plane_offsets, video_tex->plane_offsets, sizeof(video_tex->plane_offsets));
+	memcpy(data->container->tex.plane_sizes, video_tex->plane_sizes, sizeof(video_tex->plane_sizes));
+	memcpy(data->container->tex.plane_linewidth, video_tex->plane_linewidth, sizeof(video_tex->plane_linewidth));
+
 	return true;
 }
 
@@ -770,7 +840,12 @@ bool video_output_get_changes(video_t *video, video_scale_info_ts *added,
 
 struct video_data *video_data_from_container(struct video_data_container *container)
 {
-	return container ? &container->data : NULL;
+	return (container && !container->texture) ? &container->data : NULL;
+}
+
+struct video_texture *video_texture_from_container(struct video_data_container *container)
+{
+	return (container && container->texture) ? &container->tex : NULL;
 }
 
 void video_data_container_addref(struct video_data_container *container)
@@ -787,6 +862,11 @@ void video_data_container_release(struct video_data_container *container)
 	if (os_atomic_dec_long(&container->refs) != -1)
 		return;
 
-	video_frame_free((struct video_frame*)&container->data);
+	if (container->using_texture) {
+		if (container->texture)
+			obs_output_texture_release(container->texture);
+	} else
+		video_frame_free((struct video_frame*)&container->data);
+
 	bfree(container);
 }

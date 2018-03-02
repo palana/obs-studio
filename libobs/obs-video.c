@@ -410,11 +410,74 @@ static obs_video_output_t *get_active_output(obs_active_texture_t *source, size_
 		if (!output->expired)
 			return output;
 
+		for (size_t j = 0; j < source->vframe_info->data.num; j++) {
+			obs_ready_frame_t *ready = source->vframe_info->data.array + j;
+			if (ready->output != output)
+				continue;
+
+			if (ready->tex)
+				obs_output_texture_release(ready->tex);
+			da_erase(source->vframe_info->data, j);
+			break;
+		}
+
 		da_erase(source->outputs, i);
 		output = NULL;
 	}
 
 	return output;
+}
+
+static obs_ready_frame_t *add_ready_frame(obs_active_texture_t *tex, obs_video_output_t *output)
+{
+	tex->vframe_info->uses--;
+
+	obs_ready_frame_t *ready = da_push_back_new(tex->vframe_info->data);
+	ready->output = output;
+	ready->tex = tex->tex;
+
+	obs_output_texture_addref(tex->tex);
+
+	return ready;
+}
+
+static bool can_output_unconverted(enum video_format format)
+{
+	switch (format) {
+	case VIDEO_FORMAT_RGBA:
+	case VIDEO_FORMAT_BGRA:
+	case VIDEO_FORMAT_BGRX:
+		return true;
+	}
+	return false;
+}
+
+static bool can_output_converted(enum video_format format)
+{
+	switch (format) {
+	case VIDEO_FORMAT_I420:
+	case VIDEO_FORMAT_NV12:
+	case VIDEO_FORMAT_I444:
+		return true;
+	}
+	return false;
+}
+
+static void output_ready_textures(obs_texture_pipeline_t *pipeline, bool (*filter_format)(enum video_format format))
+{
+	for (size_t i = 0; i < pipeline->ready.num; i++) {
+		obs_active_texture_t *tex = pipeline->ready.array + i;
+		for (size_t j = 0; j < tex->outputs.num;) {
+			obs_video_output_t *out = tex->outputs.array[j];
+			if (!out->info.texture_output || !filter_format(out->info.format)) {
+				j += 1;
+				continue;
+			}
+
+			add_ready_frame(tex, out);
+			da_erase(tex->outputs, j);
+		}
+	}
 }
 
 static void render_output_texture(struct obs_core_video *video, obs_active_texture_t *source)
@@ -495,6 +558,7 @@ static inline void render_output_textures(struct obs_core_video *video)
 	for (size_t i = 0; i < video->output_textures.num; i++) {
 		release_ready_textures(&video->output_textures.array[i]);
 		update_pipeline_ready_state(&video->output_textures.array[i]);
+		output_ready_textures(&video->output_textures.array[i], can_output_unconverted);
 	}
 
 	free_unused_pipelines(&video->output_textures);
@@ -598,6 +662,7 @@ static void render_convert_textures(struct obs_core_video *video)
 	for (size_t i = 0; i < video->convert_textures.num; i++) {
 		release_ready_textures(&video->convert_textures.array[i]);
 		update_pipeline_ready_state(&video->convert_textures.array[i]);
+		output_ready_textures(&video->convert_textures.array[i], can_output_converted);
 	}
 
 	free_unused_pipelines(&video->convert_textures);
@@ -610,6 +675,8 @@ static void render_convert_textures(struct obs_core_video *video)
 	for (size_t i = 0; i < video->output_textures.num; i++) {
 		obs_texture_pipeline_t *pipeline = &video->output_textures.array[i];
 		for (size_t j = 0; j < pipeline->ready.num; j++) {
+			if (!pipeline->ready.array[j].outputs.num)
+				continue;
 			render_convert_texture(video, &pipeline->ready.array[j]);
 			pipeline->ready.array[j].vframe_info->uses--;
 		}
@@ -618,23 +685,8 @@ static void render_convert_textures(struct obs_core_video *video)
 	profile_end(render_convert_textures_name);
 }
 
-static obs_ready_frame_t *add_ready_frame(obs_active_texture_t *tex, obs_video_output_t *output)
-{
-	tex->vframe_info->uses--;
-
-	obs_ready_frame_t *ready = da_push_back_new(tex->vframe_info->data);
-	ready->output = output;
-	ready->tex = tex->tex;
-
-	obs_output_texture_addref(tex->tex);
-
-	return ready;
-}
-
 static inline void stage_output_texture(struct obs_core_video *video, obs_active_texture_t *source)
 {
-	assert(source->outputs.num == 1);
-
 	obs_video_output_t *output = get_active_output(source, 0);
 	if (!output)
 		return;
@@ -691,6 +743,8 @@ static void stage_output_textures(struct obs_core_video *video)
 	for (size_t i = 0; i < video->convert_textures.num; i++) {
 		obs_texture_pipeline_t *pipeline = &video->convert_textures.array[i];
 		for (size_t j = 0; j < pipeline->ready.num; j++) {
+			if (!pipeline->ready.array[j].outputs.num)
+				continue;
 			stage_output_texture(video, &pipeline->ready.array[j]);
 			pipeline->ready.array[j].vframe_info->uses--;
 		}
@@ -859,6 +913,18 @@ static inline void copy_rgbx_frame(struct video_frame *output_frame,
 	}
 }
 
+static void output_video_texture(video_t *video, video_locked_frame locked, obs_video_output_t *output, obs_output_texture_t *output_tex)
+{
+	struct video_texture tex_info = { 0 };
+	tex_info.tex = output_tex->tex;
+	memcpy(tex_info.plane_offsets, output->plane_offsets, sizeof(output->plane_offsets));
+	memcpy(tex_info.plane_sizes, output->plane_sizes, sizeof(output->plane_sizes));
+	memcpy(tex_info.plane_linewidth, output->plane_linewidth, sizeof(output->plane_linewidth));
+	
+	if (!video_output_add_texture(video, output_tex, &tex_info, &output->info, locked, output->expiring || output->expired))
+		blog(LOG_ERROR, "Failed to set texture for output");
+}
+
 static inline void output_video_data(video_t *video,
 		struct obs_vframe_info *info)
 {
@@ -870,18 +936,23 @@ static inline void output_video_data(video_t *video,
 		struct video_frame output_frame;
 		for (size_t i = 0; i < info->data.num; i++) {
 			obs_video_output_t *output = info->data.array[i].output;
-			if (!video_output_get_frame_buffer(video, &output_frame, &output->info, locked, output->expiring || output->expired)) {
-				blog(LOG_ERROR, "Failed to get frame buffer for output");
-				continue;
-			}
+			if (output->info.texture_output) {
+				output_video_texture(video, locked, output, info->data.array[i].tex);
 
-			struct video_frame *frame = &info->data.array[i].frame;
-			if (output->info.gpu_conversion) {
-				set_gpu_converted_data(&output_frame, output, frame);
-			} else if (format_is_yuv(output->info.format)) {
-				convert_frame(&output_frame, output, frame);
 			} else {
-				copy_rgbx_frame(&output_frame, output, frame);
+				if (!video_output_get_frame_buffer(video, &output_frame, &output->info, locked, output->expiring || output->expired)) {
+					blog(LOG_ERROR, "Failed to get frame buffer for output");
+					continue;
+				}
+
+				struct video_frame *frame = &info->data.array[i].frame;
+				if (output->info.gpu_conversion) {
+					set_gpu_converted_data(&output_frame, output, frame);
+				} else if (format_is_yuv(output->info.format)) {
+					convert_frame(&output_frame, output, frame);
+				} else {
+					copy_rgbx_frame(&output_frame, output, frame);
+				}
 			}
 
 			if (info->data.array[i].tex)
@@ -1133,7 +1204,7 @@ static bool obs_init_gpu_conversion(obs_video_output_t *output)
 
 	calc_gpu_conversion_sizes(output);
 
-	if (!output->conversion_height) {
+	if (!output->conversion_height && !can_output_unconverted(output->info.format)) {
 		blog(LOG_INFO, "GPU conversion not available for format: %u",
 			(unsigned int)output->info.format);
 		return false;
@@ -1434,4 +1505,14 @@ void obs_defer_graphics_cleanup(size_t num,
 
 		obs_leave_graphics();
 	}
+}
+
+void obs_output_texture_addref(obs_output_texture_t *tex)
+{
+	os_atomic_inc_long(&tex->refs);
+}
+
+void obs_output_texture_release(obs_output_texture_t *tex)
+{
+	os_atomic_dec_long(&tex->refs);
 }

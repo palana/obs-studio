@@ -251,15 +251,8 @@ struct obs_output_texture {
 	};
 };
 
-static inline void obs_output_texture_addref(obs_output_texture_t *tex)
-{
-	os_atomic_inc_long(&tex->refs);
-}
-
-static inline void obs_output_texture_release(obs_output_texture_t *tex)
-{
-	os_atomic_dec_long(&tex->refs);
-}
+void obs_output_texture_addref(obs_output_texture_t *tex);
+void obs_output_texture_release(obs_output_texture_t *tex);
 
 typedef DARRAY(obs_video_output_t*) obs_video_outputs_t;
 

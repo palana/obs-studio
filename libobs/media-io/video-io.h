@@ -21,6 +21,8 @@
 
 #include "util/darray.h"
 
+#include "graphics/graphics.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -133,6 +135,7 @@ struct video_scale_info {
 	enum video_colorspace colorspace;
 	enum obs_scale_type   scale_type;
 	bool                  gpu_conversion;
+	bool                  texture_output;
 };
 typedef DARRAY(struct video_scale_info) video_scale_info_ts;
 
@@ -146,7 +149,22 @@ struct video_data {
 	video_tracked_frame_id tracked_id;
 };
 
+struct video_texture {
+	gs_texture_t        *tex;
+	uint32_t            plane_offsets[3];
+	uint32_t            plane_sizes[3];
+	uint32_t            plane_linewidth[3];
+	uint64_t            timestamp;
+
+	struct video_scale_info info;
+
+	video_tracked_frame_id tracked_id;
+};
+
 struct video_data_container;
+
+struct obs_output_texture;
+typedef struct obs_output_texture obs_output_texture_t;
 
 typedef void (*video_data_callback)(void *param, struct video_data_container *container);
 
@@ -184,6 +202,8 @@ EXPORT video_locked_frame video_output_lock_frame(video_t *video,
 		int count, uint64_t timestamp, video_tracked_frame_id tracked_id);
 EXPORT bool video_output_get_frame_buffer(video_t *video,
 		struct video_frame *frame, struct video_scale_info *info, video_locked_frame locked, bool expiring);
+EXPORT bool video_output_add_texture(video_t *video, obs_output_texture_t *output_tex,
+		struct video_texture *video_tex, struct video_scale_info *info, video_locked_frame locked, bool expiring);
 EXPORT void video_output_unlock_frame(video_t *video, video_locked_frame locked);
 EXPORT uint64_t video_output_get_frame_time(const video_t *video);
 EXPORT void video_output_stop(video_t *video);
@@ -201,6 +221,7 @@ EXPORT bool video_output_get_changes(video_t *video, video_scale_info_ts *added,
 		video_scale_info_ts *expiring, video_scale_info_ts *removed);
 
 EXPORT struct video_data *video_data_from_container(struct video_data_container *container);
+EXPORT struct video_texture *video_texture_from_container(struct video_data_container *container);
 EXPORT void video_data_container_addref(struct video_data_container *container);
 EXPORT void video_data_container_release(struct video_data_container *container);
 

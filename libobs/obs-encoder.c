@@ -146,6 +146,7 @@ static inline void get_video_info(struct obs_encoder *encoder,
 	if (encoder->video_conversion_set)
 		*info = encoder->video_conversion;
 
+	info->texture_output = false;
 	if (encoder->info.get_video_info)
 		encoder->info.get_video_info(encoder->context.data, info);
 }
