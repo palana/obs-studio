@@ -190,5 +190,7 @@ bool load_graphics_imports(struct gs_exports *exports, void *module,
 	GRAPHICS_IMPORT_OPTIONAL(device_get_luid);
 #endif
 
+	GRAPHICS_IMPORT_OPTIONAL(device_get_handle);
+
 	return success;
 }

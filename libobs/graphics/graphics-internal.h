@@ -260,6 +260,7 @@ struct gs_exports {
 
 	const void *(*device_get_luid)(gs_device_t *device);
 #endif
+	void *(*device_get_handle)(gs_device_t *device);
 };
 
 struct blend_state {

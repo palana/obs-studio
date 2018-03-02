@@ -2584,3 +2584,16 @@ const void *gs_get_device_luid(void)
 }
 
 #endif
+
+void *gs_get_device_handle(void)
+{
+	graphics_t *graphics = thread_graphics;
+	if (!gs_valid("gs_get_device_handle"))
+		return NULL;
+
+	if (!graphics->exports.device_get_handle)
+		return NULL;
+
+	return graphics->exports.device_get_handle(
+				graphics->device);
+}

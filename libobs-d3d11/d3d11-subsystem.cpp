@@ -2271,3 +2271,8 @@ extern "C" EXPORT const void *device_get_luid(gs_device_t *device)
 {
 	return device->luidValid ? static_cast<void*>(&device->luid) : nullptr;
 }
+
+extern "C" EXPORT void *device_get_handle(gs_device_t *device)
+{
+	return device->device.Get();
+}

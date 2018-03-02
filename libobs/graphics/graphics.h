@@ -767,6 +767,8 @@ EXPORT gs_texture_t *gs_texture_open_shared(uint32_t handle);
 EXPORT const void *gs_get_device_luid(void);
 #endif
 
+EXPORT void *gs_get_device_handle(void);
+
 /* inline functions used by modules */
 
 static inline uint32_t gs_get_format_bpp(enum gs_color_format format)
