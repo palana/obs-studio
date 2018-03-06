@@ -800,6 +800,15 @@ double video_output_get_frame_rate(const video_t *video)
 	return (double)video->info.fps_num / (double)video->info.fps_den;
 }
 
+bool get_output_texture_size(struct video_scale_info *info, struct video_texture_size *size);
+bool video_get_output_texture_size(struct video_scale_info *info, struct video_texture_size *size)
+{
+	if (!info || !size || !info->texture_output)
+		return false;
+
+	return get_output_texture_size(info, size);
+}
+
 uint32_t video_output_get_skipped_frames(const video_t *video)
 {
 	return video->skipped_frames;

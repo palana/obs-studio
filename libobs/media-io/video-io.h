@@ -161,6 +161,14 @@ struct video_texture {
 	video_tracked_frame_id tracked_id;
 };
 
+struct video_texture_size {
+	uint32_t width;
+	uint32_t height;
+	uint32_t plane_offsets[3];
+	uint32_t plane_sizes[3];
+	uint32_t plane_linewidth[3];
+};
+
 struct video_data_container;
 
 struct obs_output_texture;
@@ -210,6 +218,7 @@ EXPORT void video_output_stop(video_t *video);
 EXPORT bool video_output_stopped(video_t *video);
 
 EXPORT double video_output_get_frame_rate(const video_t *video);
+EXPORT bool video_get_output_texture_size(struct video_scale_info *info, struct video_texture_size *size);
 
 EXPORT uint32_t video_output_get_skipped_frames(const video_t *video);
 EXPORT uint32_t video_output_get_total_frames(const video_t *video);

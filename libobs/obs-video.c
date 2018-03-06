@@ -1198,6 +1198,40 @@ static inline void calc_gpu_conversion_sizes(obs_video_output_t *output)
 	}
 }
 
+bool get_output_texture_size(struct video_scale_info *info, struct video_texture_size *size)
+{
+	if (!info || !size || !info->texture_output)
+		return false;
+
+	if (can_output_unconverted(info->format)) {
+		size->width = info->width;
+		size->height = info->height;
+		memset(size->plane_offsets, 0, sizeof(size->plane_offsets));
+		memset(size->plane_sizes, 0, sizeof(size->plane_sizes));
+		memset(size->plane_linewidth, 0, sizeof(size->plane_linewidth));
+
+		size->plane_sizes[0] = info->width * info->height;
+		size->plane_linewidth[0] = info->width;
+		return true;
+	}
+
+	obs_video_output_t output;
+	output.info = *info;
+
+	calc_gpu_conversion_sizes(&output);
+
+	if (!output.conversion_height)
+		return false;
+
+	size->width = output.info.width;
+	size->height = output.conversion_height;
+	memcpy(size->plane_offsets, output.plane_offsets, sizeof(output.plane_offsets));
+	memcpy(size->plane_sizes, output.plane_sizes, sizeof(output.plane_sizes));
+	memcpy(size->plane_linewidth, output.plane_linewidth, sizeof(output.plane_linewidth));
+
+	return true;
+}
+
 static bool obs_init_gpu_conversion(obs_video_output_t *output)
 {
 	struct obs_core_video *video = &obs->video;
