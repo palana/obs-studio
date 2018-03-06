@@ -284,6 +284,7 @@ struct obs_video_output {
 	bool                expiring;
 	bool                expired;
 
+	uint32_t            conversion_width;
 	uint32_t            conversion_height;
 	uint32_t            plane_offsets[3];
 	uint32_t            plane_sizes[3];

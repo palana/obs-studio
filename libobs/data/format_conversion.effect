@@ -121,6 +121,62 @@ float4 PSNV12(VertInOut vert_in) : TARGET
 	}
 }
 
+float4 PSNV12LineWise(VertInOut vert_in) : TARGET
+{
+	float2 sample_pos[4];
+
+	float x = floor(vert_in.uv.x * input_width) / input_width;
+
+	if ((vert_in.uv.y * input_height) < height) {
+#ifdef DEBUGGING
+		return float4(1.0, 1.0, 1.0, 1.0);
+#endif
+
+		float lum_v = floor(vert_in.uv.y * input_height) / height;
+		float lum_u = x;
+
+		/* move to texel centers to sample the 4 pixels properly */
+		lum_u += width_i  * 0.5;
+		lum_v += height_i * 0.5;
+
+		sample_pos[0] = float2(lum_u,            lum_v);
+		sample_pos[1] = float2(lum_u += width_i, lum_v);
+		sample_pos[2] = float2(lum_u += width_i, lum_v);
+		sample_pos[3] = float2(lum_u +  width_i, lum_v);
+
+		float4x4 out_val = float4x4(
+			image.Sample(def_sampler, sample_pos[0]),
+			image.Sample(def_sampler, sample_pos[1]),
+			image.Sample(def_sampler, sample_pos[2]),
+			image.Sample(def_sampler, sample_pos[3])
+		);
+
+		return transpose(out_val)[1];
+	} else {
+#ifdef DEBUGGING
+		return float4(0.5, 0.2, 0.5, 0.2);
+#endif
+
+		float ch_u = x;
+		float ch_v = floor((vert_in.uv.y * input_height) - height) / height * 2;
+
+		float width_i2 = width_i*2.0;
+
+		/* move to the borders of each set of 4 pixels to force it
+		 * to do bilinear averaging */
+		ch_u += width_i;
+		ch_v += height_i;
+
+		sample_pos[0] = float2(ch_u,             ch_v);
+		sample_pos[1] = float2(ch_u + width_i2,  ch_v);
+		
+		return float4(
+				image.Sample(def_sampler, sample_pos[0]).rb,
+				image.Sample(def_sampler, sample_pos[1]).rb
+				);
+	}
+}
+
 float4 PSPlanar420(VertInOut vert_in) : TARGET
 {
 	float v_mul = floor(vert_in.uv.y * input_height);
@@ -346,6 +402,15 @@ technique NV12
 	{
 		vertex_shader = VSDefault(vert_in);
 		pixel_shader  = PSNV12(vert_in);
+	}
+}
+
+technique NV12LineWise
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader  = PSNV12LineWise(vert_in);
 	}
 }
 

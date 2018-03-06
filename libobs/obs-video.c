@@ -594,7 +594,7 @@ static void render_convert_texture(struct obs_core_video *video, obs_active_text
 			continue;
 		}
 
-		obs_active_texture_t *tex = find_texture_for_target(&video->convert_textures, output->info.width, output->conversion_height, OBS_OUTPUT_TEXTURE_TEX);
+		obs_active_texture_t *tex = find_texture_for_target(&video->convert_textures, output->conversion_width, output->conversion_height, OBS_OUTPUT_TEXTURE_TEX);
 		if (!tex) {
 			blog(LOG_ERROR, "Failed to get convert texture for %p (%dx%d)", output, output->info.width, output->info.height);
 			i += 1;
@@ -636,18 +636,19 @@ static void render_convert_texture(struct obs_core_video *video, obs_active_text
 		set_eparam(effect, "height_d2", fheight * 0.5f);
 		set_eparam(effect, "width_d2_i", 1.0f / (fwidth  * 0.5f));
 		set_eparam(effect, "height_d2_i", 1.0f / (fheight * 0.5f));
+		set_eparam(effect, "input_width", (float)output->conversion_width);
 		set_eparam(effect, "input_height", (float)output->conversion_height);
 
 		gs_effect_set_texture(image, texture);
 
 		gs_set_render_target(target, NULL);
-		set_render_size(output->info.width, output->conversion_height);
+		set_render_size(output->conversion_width, output->conversion_height);
 
 		gs_enable_blending(false);
 		passes = gs_technique_begin(tech);
 		for (size_t i = 0; i < passes; i++) {
 			gs_technique_begin_pass(tech, i);
-			gs_draw_sprite(texture, 0, output->info.width,
+			gs_draw_sprite(texture, 0, output->conversion_width,
 				output->conversion_height);
 			gs_technique_end_pass(tech);
 		}
@@ -1125,26 +1126,50 @@ static inline void set_nv12_sizes(obs_video_output_t *output)
 	uint32_t chroma_pixels;
 	uint32_t total_bytes;
 
-	chroma_pixels = (output->info.width * output->info.height / 2);
-	chroma_pixels = GET_ALIGN(chroma_pixels, PIXEL_SIZE);
+	if (!output->info.texture_output) {
+		chroma_pixels = (output->info.width * output->info.height / 2);
+		chroma_pixels = GET_ALIGN(chroma_pixels, PIXEL_SIZE);
 
-	output->plane_offsets[0] = 0;
-	output->plane_offsets[1] = output->info.width * output->info.height;
+		output->plane_offsets[0] = 0;
+		output->plane_offsets[1] = output->info.width * output->info.height;
 
-	output->plane_linewidth[0] = output->info.width;
-	output->plane_linewidth[1] = output->info.width;
+		output->plane_linewidth[0] = output->info.width;
+		output->plane_linewidth[1] = output->info.width;
 
-	output->plane_sizes[0] = output->plane_offsets[1];
-	output->plane_sizes[1] = output->plane_sizes[0]/2;
+		output->plane_sizes[0] = output->plane_offsets[1];
+		output->plane_sizes[1] = output->plane_sizes[0] / 2;
 
-	total_bytes = output->plane_offsets[1] + chroma_pixels;
+		total_bytes = output->plane_offsets[1] + chroma_pixels;
 
-	output->conversion_height =
-		(total_bytes/PIXEL_SIZE + output->info.width-1) /
-		output->info.width;
+		output->conversion_height =
+			(total_bytes / PIXEL_SIZE + output->info.width - 1) /
+			output->info.width;
 
-	output->conversion_height = GET_ALIGN(output->conversion_height, 2);
-	output->conversion_tech = "NV12";
+		output->conversion_height = GET_ALIGN(output->conversion_height, 2);
+		output->conversion_tech = "NV12";
+
+	} else {
+		chroma_pixels = (output->info.width * output->info.height / 2);
+		chroma_pixels = GET_ALIGN(chroma_pixels, PIXEL_SIZE);
+
+		output->plane_offsets[0] = 0;
+		output->plane_offsets[1] = output->info.width * output->info.height;
+
+		output->conversion_width = GET_ALIGN(output->info.width / 4, PIXEL_SIZE);
+
+		output->plane_linewidth[0] = output->conversion_width;
+		output->plane_linewidth[1] = output->conversion_width;
+
+		output->plane_sizes[0] = output->plane_offsets[1];
+		output->plane_sizes[1] = output->plane_sizes[0]/2;
+
+		total_bytes = output->plane_offsets[1] + chroma_pixels;
+
+		output->conversion_height = output->info.width * 3 / 2;
+
+		output->conversion_height = GET_ALIGN(output->conversion_height, 2);
+		output->conversion_tech = "NV12LineWise";
+	}
 }
 
 static inline void set_444p_sizes(obs_video_output_t *output)
@@ -1185,6 +1210,8 @@ static inline void calc_gpu_conversion_sizes(obs_video_output_t *output)
 	memset(output->plane_linewidth, 0,
 		sizeof(output->plane_linewidth));
 
+	output->conversion_width = output->info.width;
+
 	switch (output->info.format) {
 	case VIDEO_FORMAT_I420:
 		set_420p_sizes(output);
@@ -1223,7 +1250,7 @@ bool get_output_texture_size(struct video_scale_info *info, struct video_texture
 	if (!output.conversion_height)
 		return false;
 
-	size->width = output.info.width;
+	size->width = output.conversion_width;
 	size->height = output.conversion_height;
 	memcpy(size->plane_offsets, output.plane_offsets, sizeof(output.plane_offsets));
 	memcpy(size->plane_sizes, output.plane_sizes, sizeof(output.plane_sizes));
