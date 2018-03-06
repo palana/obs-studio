@@ -209,9 +209,6 @@ EXPORT uint64_t video_output_get_frame_time(const video_t *video);
 EXPORT void video_output_stop(video_t *video);
 EXPORT bool video_output_stopped(video_t *video);
 
-EXPORT enum video_format video_output_get_format(const video_t *video, void*);
-EXPORT uint32_t video_output_get_width(const video_t *video, void*);
-EXPORT uint32_t video_output_get_height(const video_t *video, void*);
 EXPORT double video_output_get_frame_rate(const video_t *video);
 
 EXPORT uint32_t video_output_get_skipped_frames(const video_t *video);
