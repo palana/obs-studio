@@ -2583,6 +2583,19 @@ const void *gs_get_device_luid(void)
 				graphics->device);
 }
 
+uint32_t gs_texture_get_shared_handle(gs_texture_t *tex)
+{
+	graphics_t *graphics = thread_graphics;
+	if (!gs_valid("gs_texture_get_shared_handle"))
+		return 0;
+
+	if (!graphics->exports.device_texture_get_shared_handle)
+		return 0;
+
+	return graphics->exports.device_texture_get_shared_handle(
+			graphics->device, tex);
+}
+
 #endif
 
 void *gs_get_device_handle(void)

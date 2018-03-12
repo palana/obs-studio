@@ -416,6 +416,7 @@ EXPORT gs_texture_t *gs_texrender_get_texture(const gs_texrender_t *texrender);
 #define GS_DYNAMIC       (1<<1)
 #define GS_RENDER_TARGET (1<<2)
 #define GS_GL_DUMMYTEX   (1<<3) /**<< texture with no allocated texture data */
+#define GS_SHARED        (1<<4)
 
 /* ---------------- */
 /* global functions */
@@ -765,6 +766,8 @@ EXPORT void gs_texture_release_dc(gs_texture_t *gdi_tex);
 EXPORT gs_texture_t *gs_texture_open_shared(uint32_t handle);
 
 EXPORT const void *gs_get_device_luid(void);
+
+EXPORT uint32_t gs_texture_get_shared_handle(gs_texture_t *tex);
 #endif
 
 EXPORT void *gs_get_device_handle(void);

@@ -88,6 +88,20 @@ inline void gs_texture_2d::Rebuild(ID3D11Device *dev)
 		if (FAILED(hr))
 			throw HRError("Failed to create GDI surface", hr);
 	}
+
+	if (canShare) {
+		ComPtr<IDXGIResource> dxgi_res;
+		hr = texture->QueryInterface(dxgi_res.Assign());
+		if (FAILED(hr))
+			throw HRError("Failed to get IDXGIResource", hr);
+
+		HANDLE handle;
+		hr = dxgi_res->GetSharedHandle(&handle);
+		if (FAILED(hr))
+			throw HRError("Failed to get shared handle", hr);
+
+		createdSharedHandle = reinterpret_cast<uint32_t>(handle);
+	}
 }
 
 inline void gs_zstencil_buffer::Rebuild(ID3D11Device *dev)

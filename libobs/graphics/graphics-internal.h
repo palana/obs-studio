@@ -259,6 +259,9 @@ struct gs_exports {
 				uint32_t handle);
 
 	const void *(*device_get_luid)(gs_device_t *device);
+
+	uint32_t (*device_texture_get_shared_handle)(gs_device_t *device,
+				gs_texture_t *tex);
 #endif
 	void *(*device_get_handle)(gs_device_t *device);
 };

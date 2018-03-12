@@ -18,6 +18,14 @@
 #include <util/base.h>
 #include "d3d11-subsystem.hpp"
 
+uint32_t gs_texture_2d::GetSharedHandle()
+{
+	if (!canShare)
+		throw "texture can't be shared (not created with GS_SHARED)";
+
+	return createdSharedHandle;
+}
+
 void gs_texture_2d::InitSRD(vector<D3D11_SUBRESOURCE_DATA> &srd)
 {
 	uint32_t rowSizeBytes  = width  * gs_get_format_bpp(format);
@@ -96,6 +104,9 @@ void gs_texture_2d::InitTexture(const uint8_t **data)
 	if (isGDICompatible)
 		td.MiscFlags |= D3D11_RESOURCE_MISC_GDI_COMPATIBLE;
 
+	if (canShare)
+		td.MiscFlags |= D3D11_RESOURCE_MISC_SHARED;
+
 	if (data) {
 		BackupTexture(data);
 		InitSRD(srd);
@@ -111,6 +122,20 @@ void gs_texture_2d::InitTexture(const uint8_t **data)
 				(void**)gdiSurface.Assign());
 		if (FAILED(hr))
 			throw HRError("Failed to create GDI surface", hr);
+	}
+
+	if (canShare) {
+		ComPtr<IDXGIResource> dxgi_res;
+		auto hr = texture->QueryInterface(dxgi_res.Assign());
+		if (FAILED(hr))
+			throw HRError("Failed to get IDXGIResource", hr);
+
+		HANDLE handle;
+		hr = dxgi_res->GetSharedHandle(&handle);
+		if (FAILED(hr))
+			throw HRError("Failed to get shared handle", hr);
+
+		createdSharedHandle = reinterpret_cast<uint32_t>(handle);
 	}
 }
 
@@ -175,7 +200,8 @@ gs_texture_2d::gs_texture_2d(gs_device_t *device, uint32_t width,
 	  isGDICompatible (gdiCompatible),
 	  isDynamic       ((flags & GS_DYNAMIC) != 0),
 	  isShared        (shared),
-	  genMipmaps      ((flags & GS_BUILD_MIPMAPS) != 0)
+	  genMipmaps      ((flags & GS_BUILD_MIPMAPS) != 0),
+	  canShare        ((flags & GS_SHARED) != 0)
 {
 	InitTexture(data);
 	InitResourceView();

@@ -2276,3 +2276,43 @@ extern "C" EXPORT void *device_get_handle(gs_device_t *device)
 {
 	return device->device.Get();
 }
+
+extern "C" EXPORT uint32_t device_texture_get_shared_handle(gs_device_t *device,
+		gs_texture_t *tex)
+{
+	if (!tex) {
+		blog(LOG_ERROR, "gs_texture_get_shared_handle (D3D11): "
+			"no texture supplied");
+		return 0;
+	}
+
+	if (tex->type != GS_TEXTURE_2D) {
+		blog(LOG_ERROR, "gs_texture_get_shared_handle (D3D11): "
+			"texture is not a 2D texture");
+		return 0;
+	}
+
+	auto *tex2d = static_cast<gs_texture_2d*>(tex);
+	bool retry = true;
+	do {
+		try {
+			return tex2d->GetSharedHandle();
+		} catch (HRError error) {
+			blog(LOG_ERROR, "gs_texture_get_shared_handle (D3D11): %s (%08lX)",
+					error.str, error.hr);
+			LogD3D11ErrorDetails(error, device);
+			if (retry && HRRebuildRemovedDevice(device, error.hr)) {
+				blog(LOG_WARNING, "gs_texture_get_shared_handle (D3D11): "
+						"rebuilt device, retrying");
+				retry = false;
+				continue;
+			}
+		} catch (const char *error) {
+			blog(LOG_ERROR, "gs_texture_get_shared_handle (D3D11): %s", error);
+		}
+
+		break;
+	} while (true);
+
+	return 0;
+}

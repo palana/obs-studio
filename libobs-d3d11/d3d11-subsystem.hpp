@@ -348,11 +348,15 @@ struct gs_texture_2d : gs_texture {
 	bool            isDynamic = false;
 	bool            isShared = false;
 	bool            genMipmaps = false;
+	bool            canShare = false;
 	uint32_t        sharedHandle = 0;
+	uint32_t        createdSharedHandle = 0;
 
 	vector<vector<uint8_t>> data;
 	vector<D3D11_SUBRESOURCE_DATA> srd;
 	D3D11_TEXTURE2D_DESC td = {};
+
+	uint32_t GetSharedHandle();
 
 	void InitSRD(vector<D3D11_SUBRESOURCE_DATA> &srd);
 	void InitTexture(const uint8_t **data);
