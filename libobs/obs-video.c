@@ -355,14 +355,15 @@ end:
 
 static inline gs_effect_t *get_scale_effect_internal(
 		struct obs_core_video *video,
+		uint32_t base_width, uint32_t base_height,
 		uint32_t width, uint32_t height,
 		enum obs_scale_type scale_type)
 {
 	/* if the dimension is under half the size of the original image,
 	 * bicubic/lanczos can't sample enough pixels to create an accurate
 	 * image, so use the bilinear low resolution effect instead */
-	if (width  < (video->base_width  / 2) &&
-	    height < (video->base_height / 2)) {
+	if (width  < (base_width  / 2) &&
+	    height < (base_height / 2)) {
 		return video->bilinear_lowres_effect;
 	}
 
@@ -375,24 +376,27 @@ static inline gs_effect_t *get_scale_effect_internal(
 	return video->bicubic_effect;
 }
 
-static inline bool resolution_close(struct obs_core_video *video,
+static inline bool resolution_close(
+		uint32_t base_width, uint32_t base_height,
 		uint32_t width, uint32_t height)
 {
-	long width_cmp  = (long)video->base_width  - (long)width;
-	long height_cmp = (long)video->base_height - (long)height;
+	long width_cmp  = (long)base_width  - (long)width;
+	long height_cmp = (long)base_height - (long)height;
 
 	return labs(width_cmp) <= 16 && labs(height_cmp) <= 16;
 }
 
 static inline gs_effect_t *get_scale_effect(struct obs_core_video *video,
+		uint32_t base_width, uint32_t base_height,
 		uint32_t width, uint32_t height, enum obs_scale_type scale_type)
 {
-	if (resolution_close(video, width, height)) {
+	if (resolution_close(base_width, base_height, width, height)) {
 		return video->default_effect;
 	} else {
 		/* if the scale method couldn't be loaded, use either bicubic
 		 * or bilinear by default */
 		gs_effect_t *effect = get_scale_effect_internal(video,
+			base_width, base_height,
 			width, height, scale_type);
 		if (!effect)
 			effect = !!video->bicubic_effect ?
@@ -513,15 +517,18 @@ static void render_output_texture(struct obs_core_video *video, obs_active_textu
 
 		gs_texture_t *texture = source->tex->tex;
 		gs_texture_t *target = tex->tex->tex;
+		uint32_t     base_width = gs_texture_get_width(texture);
+		uint32_t     base_height = gs_texture_get_height(texture);
 		uint32_t     width = gs_texture_get_width(target);
 		uint32_t     height = gs_texture_get_height(target);
 		struct vec2  base_i;
 
 		vec2_set(&base_i,
-			1.0f / (float)video->base_width,
-			1.0f / (float)video->base_height);
+			1.0f / (float)base_width,
+			1.0f / (float)base_height);
 
 		gs_effect_t    *effect = get_scale_effect(video,
+			base_width, base_height,
 			width, height, output->info.scale_type);
 		gs_technique_t *tech = gs_effect_get_technique(effect, "DrawMatrix");
 		gs_eparam_t    *image = gs_effect_get_param_by_name(effect, "image");
