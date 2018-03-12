@@ -733,6 +733,7 @@ bool video_output_add_texture(video_t *video, obs_output_texture_t *output_tex,
 	data->container->tex.tracked_id = cfi->tracked_id;
 
 	data->container->tex.tex = video_tex->tex;
+	data->container->tex.shared_handle = video_tex->shared_handle;
 	memcpy(data->container->tex.plane_offsets, video_tex->plane_offsets, sizeof(video_tex->plane_offsets));
 	memcpy(data->container->tex.plane_sizes, video_tex->plane_sizes, sizeof(video_tex->plane_sizes));
 	memcpy(data->container->tex.plane_linewidth, video_tex->plane_linewidth, sizeof(video_tex->plane_linewidth));

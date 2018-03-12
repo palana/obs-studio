@@ -98,6 +98,7 @@ struct encoder_frame {
 		};
 		struct {
 			gs_texture_t        *tex;
+			uint32_t            shared_handle;
 			uint32_t            plane_offsets[3];
 			uint32_t            plane_sizes[3];
 			uint32_t            plane_linewidth[3];

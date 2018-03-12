@@ -222,6 +222,7 @@ struct obs_ready_frame {
 	obs_video_output_t   *output;
 	obs_output_texture_t *tex;
 	struct video_frame   frame;
+	uint32_t             shared_handle;
 };
 typedef struct obs_ready_frame obs_ready_frame_t;
 

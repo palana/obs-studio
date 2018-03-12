@@ -437,6 +437,8 @@ static obs_ready_frame_t *add_ready_frame(obs_active_texture_t *tex, obs_video_o
 	obs_ready_frame_t *ready = da_push_back_new(tex->vframe_info->data);
 	ready->output = output;
 	ready->tex = tex->tex;
+	if (output->info.texture_output)
+		ready->shared_handle = gs_texture_get_shared_handle(tex->tex->tex);
 
 	obs_output_texture_addref(tex->tex);
 
@@ -942,10 +944,11 @@ static inline void copy_rgbx_frame(struct video_frame *output_frame,
 	}
 }
 
-static void output_video_texture(video_t *video, video_locked_frame locked, obs_video_output_t *output, obs_output_texture_t *output_tex)
+static void output_video_texture(video_t *video, video_locked_frame locked, obs_video_output_t *output, obs_output_texture_t *output_tex, uint32_t shared_handle)
 {
 	struct video_texture tex_info = { 0 };
 	tex_info.tex = output_tex->tex;
+	tex_info.shared_handle = shared_handle;
 	memcpy(tex_info.plane_offsets, output->plane_offsets, sizeof(output->plane_offsets));
 	memcpy(tex_info.plane_sizes, output->plane_sizes, sizeof(output->plane_sizes));
 	memcpy(tex_info.plane_linewidth, output->plane_linewidth, sizeof(output->plane_linewidth));
@@ -966,7 +969,7 @@ static inline void output_video_data(video_t *video,
 		for (size_t i = 0; i < info->data.num; i++) {
 			obs_video_output_t *output = info->data.array[i].output;
 			if (output->info.texture_output) {
-				output_video_texture(video, locked, output, info->data.array[i].tex);
+				output_video_texture(video, locked, output, info->data.array[i].tex, info->data.array[i].shared_handle);
 
 			} else {
 				if (!video_output_get_frame_buffer(video, &output_frame, &output->info, locked, output->expiring || output->expired)) {

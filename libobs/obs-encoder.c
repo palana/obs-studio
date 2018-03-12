@@ -801,6 +801,7 @@ static void receive_video(void *param, struct video_data_container *container)
 
 		enc_frame.is_texture = true;
 		enc_frame.tex = tex->tex;
+		enc_frame.shared_handle = tex->shared_handle;
 		memcpy(enc_frame.plane_offsets, tex->plane_offsets, sizeof(tex->plane_offsets));
 		memcpy(enc_frame.plane_sizes, tex->plane_sizes, sizeof(tex->plane_sizes));
 		memcpy(enc_frame.plane_linewidth, tex->plane_linewidth, sizeof(tex->plane_linewidth));
