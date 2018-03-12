@@ -201,7 +201,7 @@ static obs_active_texture_t *find_texture(obs_texture_pipeline_t *pipeline)
 		switch (pipeline->type) {
 		case OBS_OUTPUT_TEXTURE_TEX:
 			tex->tex = gs_texture_create(pipeline->width, pipeline->height,
-				GS_RGBA, 1, NULL, GS_RENDER_TARGET);
+				GS_RGBA, 1, NULL, GS_RENDER_TARGET | (gs_shared_texture_available() ? GS_SHARED : 0));
 			break;
 		case OBS_OUTPUT_TEXTURE_STAGESURF:
 			tex->surf = gs_stagesurface_create(pipeline->width, pipeline->height,
@@ -434,8 +434,6 @@ static obs_video_output_t *get_active_output(obs_active_texture_t *source, size_
 
 static obs_ready_frame_t *add_ready_frame(obs_active_texture_t *tex, obs_video_output_t *output)
 {
-	tex->vframe_info->uses--;
-
 	obs_ready_frame_t *ready = da_push_back_new(tex->vframe_info->data);
 	ready->output = output;
 	ready->tex = tex->tex;
@@ -467,19 +465,16 @@ static bool can_output_converted(enum video_format format)
 	return false;
 }
 
-static void output_ready_textures(obs_texture_pipeline_t *pipeline, bool (*filter_format)(enum video_format format))
+static void output_pending_textures(obs_texture_pipeline_t *pipeline, bool (*filter_format)(enum video_format format))
 {
 	for (size_t i = 0; i < pipeline->ready.num; i++) {
 		obs_active_texture_t *tex = pipeline->ready.array + i;
-		for (size_t j = 0; j < tex->outputs.num;) {
+		for (size_t j = 0; j < tex->outputs.num; j++) {
 			obs_video_output_t *out = tex->outputs.array[j];
-			if (!out->info.texture_output || !filter_format(out->info.format)) {
-				j += 1;
+			if (!out->info.texture_output || !filter_format(out->info.format))
 				continue;
-			}
 
 			add_ready_frame(tex, out);
-			da_erase(tex->outputs, j);
 		}
 	}
 }
@@ -565,7 +560,7 @@ static inline void render_output_textures(struct obs_core_video *video)
 	for (size_t i = 0; i < video->output_textures.num; i++) {
 		release_ready_textures(&video->output_textures.array[i]);
 		update_pipeline_ready_state(&video->output_textures.array[i]);
-		output_ready_textures(&video->output_textures.array[i], can_output_unconverted);
+		output_pending_textures(&video->output_textures.array[i], can_output_unconverted);
 	}
 
 	free_unused_pipelines(&video->output_textures);
@@ -670,7 +665,7 @@ static void render_convert_textures(struct obs_core_video *video)
 	for (size_t i = 0; i < video->convert_textures.num; i++) {
 		release_ready_textures(&video->convert_textures.array[i]);
 		update_pipeline_ready_state(&video->convert_textures.array[i]);
-		output_ready_textures(&video->convert_textures.array[i], can_output_converted);
+		output_pending_textures(&video->convert_textures.array[i], can_output_converted);
 	}
 
 	free_unused_pipelines(&video->convert_textures);
@@ -695,31 +690,43 @@ static void render_convert_textures(struct obs_core_video *video)
 
 static inline void stage_output_texture(struct obs_core_video *video, obs_active_texture_t *source)
 {
-	obs_video_output_t *output = get_active_output(source, 0);
-	if (!output)
-		return;
+	obs_video_output_t *output;
+	while (output = get_active_output(source, 0)) {
+		uint32_t width = gs_texture_get_width(source->tex->tex);
+		uint32_t height = gs_texture_get_height(source->tex->tex);
 
-	uint32_t height = gs_texture_get_height(source->tex->tex);
-	obs_active_texture_t *tex = find_texture_for_target(&video->copy_surfaces,
-		gs_texture_get_width(source->tex->tex), height, OBS_OUTPUT_TEXTURE_STAGESURF);
-	if (!tex) {
-		blog(LOG_ERROR, "Failed to get copy surface for %p (%dx%d)", output, output->info.width, height);
-		return;
+		if (output->info.texture_output) {
+#define TEXTURE_OUTPUT_COPY_SIZE 16
+			width = width < TEXTURE_OUTPUT_COPY_SIZE ? width : TEXTURE_OUTPUT_COPY_SIZE;
+			height = height < TEXTURE_OUTPUT_COPY_SIZE ? height : TEXTURE_OUTPUT_COPY_SIZE;
+#undef TEXTURE_OUTPUT_COPY_SIZE
+		}
+
+		obs_active_texture_t *tex = find_texture_for_target(&video->copy_surfaces,
+			width, height, OBS_OUTPUT_TEXTURE_STAGESURF);
+		if (!tex) {
+			blog(LOG_ERROR, "Failed to get copy surface for %p (%dx%d)", output, output->info.width, height);
+			return;
+		}
+
+		for (size_t i = 0; i < source->outputs.num; i++) {
+			obs_video_output_t *out = source->outputs.array[i];
+			if (out->info.format != output->info.format ||
+				out->info.texture_output != output->info.texture_output)
+				continue;
+
+			da_push_back(tex->outputs, &out);
+			da_erase(source->outputs, 0);
+		}
+
+		tex->vframe_info = source->vframe_info;
+		tex->vframe_info->uses++;
+
+		if (!output->info.texture_output)
+			gs_stage_texture(tex->tex->surf, source->tex->tex);
+		else
+			gs_stage_texture_region(tex->tex->surf, source->tex->tex, 0, 0);
 	}
-
-	for (size_t i = 0; i < source->outputs.num; i++) {
-		obs_video_output_t *out = source->outputs.array[i];
-		if (out->info.format != output->info.format)
-			continue;
-
-		da_push_back(tex->outputs, &out);
-		da_erase(source->outputs, 0);
-	}
-
-	tex->vframe_info = source->vframe_info;
-	tex->vframe_info->uses++;
-
-	gs_stage_texture(tex->tex->surf, source->tex->tex);
 }
 
 static const char *stage_output_textures_name = "stage_output_textures";
@@ -786,18 +793,32 @@ static inline void download_frames(struct obs_core_video *video)
 		obs_texture_pipeline_t *pipeline = video->copy_surfaces.array + i;
 		for (size_t j = 0; j < pipeline->ready.num; j++) {
 			obs_active_texture_t *active = pipeline->ready.array + j;
-			obs_video_output_t *output = active->outputs.array[0];
 
 			struct video_frame frame = { 0 };
-
 			if (!gs_stagesurface_map(active->tex->surf, &frame.data[0], &frame.linesize[0]))
 				continue;
 
-			da_push_back(video->mapped_surfaces, &active->tex);
+			bool actual_download = false;
 
-			obs_ready_frame_t *ready = add_ready_frame(active, output);
-			ready->frame = frame;
-		}
+			obs_video_output_t *output;
+			while (output = get_active_output(active, 0)) {
+				if (!output->info.texture_output) {
+					actual_download = true;
+
+					obs_ready_frame_t *ready = add_ready_frame(active, output);
+					ready->frame = frame;
+				}
+
+				da_erase(active->outputs, 0);
+			}
+
+			if (actual_download)
+				da_push_back(video->mapped_surfaces, &active->tex);
+			else
+				gs_stagesurface_unmap(active->tex->surf);
+
+			active->vframe_info->uses--;
+ 		}
 	}
 }
 
