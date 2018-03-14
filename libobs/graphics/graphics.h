@@ -618,6 +618,8 @@ EXPORT void gs_copy_texture_region(
 		gs_texture_t *src, uint32_t src_x, uint32_t src_y,
 		uint32_t src_w, uint32_t src_h);
 EXPORT void gs_stage_texture(gs_stagesurf_t *dst, gs_texture_t *src);
+EXPORT void gs_stage_texture_region(gs_stagesurf_t *dst, gs_texture_t *src,
+		uint32_t src_x, uint32_t src_y);
 
 EXPORT void gs_begin_scene(void);
 EXPORT void gs_draw(enum gs_draw_mode draw_mode, uint32_t start_vert,

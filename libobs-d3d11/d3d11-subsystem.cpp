@@ -1441,6 +1441,32 @@ void device_stage_texture(gs_device_t *device, gs_stagesurf_t *dst,
 	}
 }
 
+void device_stage_texture_region(gs_device_t *dev, gs_stagesurf_t *dst,
+		gs_texture_t *src, uint32_t src_x, uint32_t src_y)
+{
+	try {
+		gs_texture_2d *src2d = static_cast<gs_texture_2d*>(src);
+
+		if (!src)
+			throw "Source texture is NULL";
+		if (src->type != GS_TEXTURE_2D)
+			throw "Source texture must be a 2D texture";
+		if (!dst)
+			throw "Destination surface is NULL";
+		if (dst->format != src->format)
+			throw "Source and destination formats do not match";
+		if (src2d->width < (src_x + dst->width))
+			throw "Source width is too small for given src_x and destination width";
+		if (src2d->height < (src_y + dst->height))
+			throw "Source height is too small for given src_y and destination height";
+
+		dev->CopyTex(dst->texture, 0, 0, src, src_x, src_y, dst->width, dst->height);
+
+	} catch (const char *error) {
+		blog(LOG_ERROR, "device_stage_texture_region (D3D11): %s", error);
+	}
+}
+
 void device_begin_scene(gs_device_t *device)
 {
 	clear_textures(device);

@@ -1607,6 +1607,22 @@ void gs_stage_texture(gs_stagesurf_t *dst, gs_texture_t *src)
 	graphics->exports.device_stage_texture(graphics->device, dst, src);
 }
 
+void gs_stage_texture_region(gs_stagesurf_t *dst, gs_texture_t *src,
+		uint32_t src_x, uint32_t src_y)
+{
+	graphics_t *graphics = thread_graphics;
+
+	if (!gs_valid("gs_stage_texture_region"))
+		return;
+	if (!graphics->exports.device_stage_texture_region) {
+		blog(LOG_DEBUG, "gs_stage_texture_region: not available on this device");
+		return;
+	}
+
+	graphics->exports.device_stage_texture_region(graphics->device, dst,
+			src, src_x, src_y);
+}
+
 void gs_begin_scene(void)
 {
 	graphics_t *graphics = thread_graphics;
