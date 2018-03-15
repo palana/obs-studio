@@ -798,7 +798,7 @@ static inline void download_frames(struct obs_core_video *video)
 
 			struct video_frame frame = { 0 };
 			if (!gs_stagesurface_map(active->tex->surf, &frame.data[0], &frame.linesize[0]))
-				continue;
+				goto cleanup;
 
 			bool actual_download = false;
 
@@ -819,7 +819,20 @@ static inline void download_frames(struct obs_core_video *video)
 			else
 				gs_stagesurface_unmap(active->tex->surf);
 
+		cleanup:
 			active->vframe_info->uses--;
+			while (output = get_active_output(active, 0)) {
+				for (size_t j = 0; j < active->vframe_info->data.num;) {
+					obs_ready_frame_t *ready = active->vframe_info->data.array + j;
+					if (ready->output != output) {
+						j++;
+						continue;
+					}
+
+					obs_output_texture_release(ready->tex);
+					da_erase(active->vframe_info->data, j);
+				}
+			}
  		}
 	}
 }
