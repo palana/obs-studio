@@ -692,12 +692,22 @@ static void render_convert_textures(struct obs_core_video *video)
 
 static inline void stage_output_texture(struct obs_core_video *video, obs_active_texture_t *source)
 {
+	bool actual_download = false;
 	obs_video_output_t *output;
-	while (output = get_active_output(source, 0)) {
+	{
+		size_t i = 0;
+		while (output = get_active_output(source, i)) {
+			if (!output->info.texture_output)
+				actual_download = true;
+			i++;
+		}
+	}
+
+	if (source->outputs.num) {
 		uint32_t width = gs_texture_get_width(source->tex->tex);
 		uint32_t height = gs_texture_get_height(source->tex->tex);
 
-		if (output->info.texture_output) {
+		if (!actual_download) {
 #define TEXTURE_OUTPUT_COPY_SIZE 16
 			width = width < TEXTURE_OUTPUT_COPY_SIZE ? width : TEXTURE_OUTPUT_COPY_SIZE;
 			height = height < TEXTURE_OUTPUT_COPY_SIZE ? height : TEXTURE_OUTPUT_COPY_SIZE;
@@ -707,24 +717,16 @@ static inline void stage_output_texture(struct obs_core_video *video, obs_active
 		obs_active_texture_t *tex = find_texture_for_target(&video->copy_surfaces,
 			width, height, OBS_OUTPUT_TEXTURE_STAGESURF);
 		if (!tex) {
-			blog(LOG_ERROR, "Failed to get copy surface for %p (%dx%d)", output, output->info.width, height);
+			blog(LOG_ERROR, "Failed to get copy surface (%dx%d)", width, height);
 			return;
 		}
 
-		for (size_t i = 0; i < source->outputs.num; i++) {
-			obs_video_output_t *out = source->outputs.array[i];
-			if (out->info.format != output->info.format ||
-				out->info.texture_output != output->info.texture_output)
-				continue;
-
-			da_push_back(tex->outputs, &out);
-			da_erase(source->outputs, 0);
-		}
+		da_push_back_da(tex->outputs, source->outputs);
 
 		tex->vframe_info = source->vframe_info;
 		tex->vframe_info->uses++;
 
-		if (!output->info.texture_output)
+		if (actual_download)
 			gs_stage_texture(tex->tex->surf, source->tex->tex);
 		else
 			gs_stage_texture_region(tex->tex->surf, source->tex->tex, 0, 0);
