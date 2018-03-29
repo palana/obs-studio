@@ -12,7 +12,7 @@ extern "C" bool obs_module_load(void)
 	MFStartup(MF_VERSION, MFSTARTUP_FULL);
 
 	RegisterMFAACEncoder();
-	RegisterMFH264Encoders();
+	//RegisterMFH264Encoders();
 
 	return true;
 }
