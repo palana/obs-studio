@@ -1752,8 +1752,7 @@ static void game_capture_tick(void *data, float seconds)
 
 	handle_screenshot(gc);
 
-	if ((gc->hook_stop && object_signalled(gc->hook_stop)) ||
-		target_process_died(gc)) {
+	if (target_process_died(gc)) {
 		close_capture(gc);
 	}
 
