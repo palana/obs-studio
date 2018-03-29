@@ -20,6 +20,9 @@
 
 struct obs_encoder_info *find_encoder(const char *id)
 {
+	if (!id)
+		return NULL;
+
 	for (size_t i = 0; i < obs->encoder_types.num; i++) {
 		struct obs_encoder_info *info = obs->encoder_types.array+i;
 

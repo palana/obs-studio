@@ -621,6 +621,11 @@ error:
 
 void obs_register_encoder_s(const struct obs_encoder_info *info, size_t size)
 {
+	if (!info->id) {
+		blog(LOG_WARNING, "Tried to register encoder with NULL id");
+		goto error;
+	}
+
 	if (find_encoder(info->id)) {
 		blog(LOG_WARNING, "Encoder id '%s' already exists!  "
 		                  "Duplicate library?", info->id);
