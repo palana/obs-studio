@@ -373,7 +373,6 @@ static inline bool init_hook(HANDLE thread_handle)
 
 	if (!init_pipe()) {
 		init_log("init_pipe failed");
-		return false;
 	}
 	if (!init_signals()) {
 		return false;
