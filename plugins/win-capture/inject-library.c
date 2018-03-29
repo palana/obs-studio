@@ -267,7 +267,7 @@ int inject_library_safe_obf(DWORD process_id, const wchar_t *dll,
 try_inject_process:
 	if (!try_inject_process_safe(process_id, &inject_data)) {
 		fprintf(stderr, "try_inject_process_safe failed\n");
-		return INJECT_ERROR_INJECTPROC_FAIL;
+		return thread_messages_posted ? 0 : INJECT_ERROR_INJECTPROC_FAIL;
 	}
 
 	/* SetWindowsHookEx does not inject the library in to the target
@@ -302,7 +302,7 @@ try_inject_process:
 			}
 
 			if (j++ >= RETRY_COUNT)
-				return thread_messages_posted < 5 ? INJECT_ERROR_RETRIES_EXHAUSTED : 0;
+				return thread_messages_posted ? 0 : INJECT_ERROR_RETRIES_EXHAUSTED;
 
 			fprintf(stderr, "Retrying safe hook due to all threads becoming invalid\n");
 
