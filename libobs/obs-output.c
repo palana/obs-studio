@@ -309,7 +309,8 @@ static void log_frame_info(struct obs_output *output)
 
 void obs_output_actual_stop(obs_output_t *output, bool force)
 {
-	output->started = false;
+	if (!os_atomic_set_bool(&output->started, false))
+		return;
 
 	os_event_signal(output->reconnect_stop_event);
 	if (output->reconnect_thread_active)
@@ -933,8 +934,6 @@ static void begin_queued_stop(obs_output_t *output)
 
 	if (output->stop_thread_initialized)
 		return;
-
-	output->started = false;
 
 	pthread_create(&output->stop_thread, NULL, defer_stop, output);
 	output->stop_thread_initialized = true;
