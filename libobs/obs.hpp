@@ -95,18 +95,27 @@ public:
 
 	using WrappedType = T;
 
+	friend OBSSource OBSGetRef(obs_source_t *source);
 	friend OBSSource OBSGetStrongRef(obs_weak_source_t *weak);
 	friend OBSWeakSource OBSGetWeakRef(obs_source_t *source);
 
+	friend OBSOutput OBSGetRef(obs_output_t *output);
 	friend OBSOutput OBSGetStrongRef(obs_weak_output_t *weak);
 	friend OBSWeakOutput OBSGetWeakRef(obs_output_t *output);
 
+	friend OBSEncoder OBSGetRef(obs_encoder_t *encoder);
 	friend OBSEncoder OBSGetStrongRef(obs_weak_encoder_t *weak);
 	friend OBSWeakEncoder OBSGetWeakRef(obs_encoder_t *encoder);
 
+	friend OBSService OBSGetRef(obs_service_t *service);
 	friend OBSService OBSGetStrongRef(obs_weak_service_t *weak);
 	friend OBSWeakService OBSGetWeakRef(obs_service_t *service);
 };
+
+inline OBSSource OBSGetRef(obs_source_t *source)
+{
+	return{ obs_source_get_ref(source), OBSSource::TakeOwnership() };
+}
 
 inline OBSSource OBSGetStrongRef(obs_weak_source_t *weak)
 {
@@ -117,6 +126,11 @@ inline OBSWeakSource OBSGetWeakRef(obs_source_t *source)
 {
 	return {obs_source_get_weak_source(source),
 		OBSWeakSource::TakeOwnership()};
+}
+
+inline OBSOutput OBSGetRef(obs_output_t *output)
+{
+	return{ obs_output_get_ref(output), OBSOutput::TakeOwnership() };
 }
 
 inline OBSOutput OBSGetStrongRef(obs_weak_output_t *weak)
@@ -130,6 +144,11 @@ inline OBSWeakOutput OBSGetWeakRef(obs_output_t *output)
 		OBSWeakOutput::TakeOwnership()};
 }
 
+inline OBSEncoder OBSGetRef(obs_encoder_t *encoder)
+{
+	return{ obs_encoder_get_ref(encoder), OBSEncoder::TakeOwnership() };
+}
+
 inline OBSEncoder OBSGetStrongRef(obs_weak_encoder_t *weak)
 {
 	return {obs_weak_encoder_get_encoder(weak),
@@ -140,6 +159,11 @@ inline OBSWeakEncoder OBSGetWeakRef(obs_encoder_t *encoder)
 {
 	return {obs_encoder_get_weak_encoder(encoder),
 		OBSWeakEncoder::TakeOwnership()};
+}
+
+inline OBSService OBSGetRef(obs_service_t *service)
+{
+	return{ obs_service_get_ref(service), OBSService::TakeOwnership() };
 }
 
 inline OBSService OBSGetStrongRef(obs_weak_service_t *weak)
