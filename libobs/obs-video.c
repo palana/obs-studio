@@ -586,14 +586,27 @@ static inline void set_eparam(gs_effect_t *effect, const char *name, float val)
 	gs_effect_set_float(param, val);
 }
 
-static void render_convert_texture(struct obs_core_video *video, obs_active_texture_t *source)
+static bool render_convert_texture(struct obs_core_video *video, obs_active_texture_t *source)
 {
+	bool convert_ref_used = false;
+
+	for (size_t i = 0; i < source->outputs.num; i++) {
+		obs_video_output_t *output = source->outputs.array[i];
+		if (!output->conversion_height || !output->info.gpu_conversion)
+			continue;
+
+		convert_ref_used = true;
+	}
+
+	if (!convert_ref_used)
+		return convert_ref_used;
+
 	for (size_t i = 0; i < source->outputs.num;) {
 		obs_video_output_t *output = get_active_output(source, i);
 		if (!output)
 			break;
 
-		if (!output->info.gpu_conversion) {
+		if (!output->conversion_height || !output->info.gpu_conversion) {
 			i += 1;
 			continue;
 		}
@@ -659,6 +672,8 @@ static void render_convert_texture(struct obs_core_video *video, obs_active_text
 		gs_technique_end(tech);
 		gs_enable_blending(true);
 	}
+
+	return convert_ref_used;
 }
 
 static const char *render_convert_textures_name = "render_convert_textures";
@@ -682,16 +697,17 @@ static void render_convert_textures(struct obs_core_video *video)
 		for (size_t j = 0; j < pipeline->ready.num; j++) {
 			if (!pipeline->ready.array[j].outputs.num)
 				continue;
-			render_convert_texture(video, &pipeline->ready.array[j]);
-			pipeline->ready.array[j].vframe_info->uses--;
+			if (render_convert_texture(video, &pipeline->ready.array[j]))
+				pipeline->ready.array[j].vframe_info->uses--;
 		}
 	}
 
 	profile_end(render_convert_textures_name);
 }
 
-static inline void stage_output_texture(struct obs_core_video *video, obs_active_texture_t *source)
+static inline bool stage_output_texture(struct obs_core_video *video, obs_active_texture_t *source)
 {
+	bool stage_ref_used = source->outputs.num > 0;
 	bool actual_download = false;
 	obs_video_output_t *output;
 	{
@@ -718,7 +734,7 @@ static inline void stage_output_texture(struct obs_core_video *video, obs_active
 			width, height, OBS_OUTPUT_TEXTURE_STAGESURF);
 		if (!tex) {
 			blog(LOG_ERROR, "Failed to get copy surface (%dx%d)", width, height);
-			return;
+			return stage_ref_used;
 		}
 
 		da_push_back_da(tex->outputs, source->outputs);
@@ -731,6 +747,8 @@ static inline void stage_output_texture(struct obs_core_video *video, obs_active
 		else
 			gs_stage_texture_region(tex->tex->surf, source->tex->tex, 0, 0);
 	}
+
+	return stage_ref_used;
 }
 
 static const char *stage_output_textures_name = "stage_output_textures";
@@ -754,8 +772,8 @@ static void stage_output_textures(struct obs_core_video *video)
 		for (size_t j = 0; j < pipeline->ready.num; j++) {
 			if (!pipeline->ready.array[j].outputs.num)
 				continue;
-			stage_output_texture(video, &pipeline->ready.array[j]);
-			pipeline->ready.array[j].vframe_info->uses--;
+			if (stage_output_texture(video, &pipeline->ready.array[j]))
+				pipeline->ready.array[j].vframe_info->uses--;
 		}
 	}
 
@@ -764,8 +782,8 @@ static void stage_output_textures(struct obs_core_video *video)
 		for (size_t j = 0; j < pipeline->ready.num; j++) {
 			if (!pipeline->ready.array[j].outputs.num)
 				continue;
-			stage_output_texture(video, &pipeline->ready.array[j]);
-			pipeline->ready.array[j].vframe_info->uses--;
+			if (stage_output_texture(video, &pipeline->ready.array[j]))
+				pipeline->ready.array[j].vframe_info->uses--;
 		}
 	}
 
