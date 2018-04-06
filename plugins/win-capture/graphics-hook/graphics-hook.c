@@ -671,7 +671,6 @@ static inline void hlogv(const char *format, va_list args)
 	int num = _vsprintf_p(message, 1024, format, args);
 	if (num) {
 		if (!ipc_pipe_client_write(&pipe, message, num + 1)) {
-			ipc_pipe_client_free(&pipe);
 			append_log(message, num + 1);
 		}
 		DbgOut(message);
