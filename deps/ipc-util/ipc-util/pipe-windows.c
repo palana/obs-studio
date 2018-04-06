@@ -161,30 +161,57 @@ static inline bool ipc_pipe_internal_wait_for_connection(
 		           || (!success && GetLastError() == ERROR_PIPE_CONNECTED);
 }
 
+static void actually_free_pipe_client(ipc_pipe_client_t *pipe)
+{
+	if (pipe->handle && pipe->handle != INVALID_HANDLE_VALUE)
+		CloseHandle(pipe->handle);
+
+	if (pipe->server_process && pipe->server_process != INVALID_HANDLE_VALUE)
+		CloseHandle(pipe->server_process);
+
+	pipe->handle = NULL;
+	pipe->server_process = NULL;
+	pipe->write_failed = false;
+}
+
 static inline bool ipc_pipe_internal_open_pipe(ipc_pipe_client_t *pipe,
 		const char *name)
 {
+	if (ipc_pipe_client_valid(pipe))
+		return false;
+
 	DWORD mode = PIPE_READMODE_MESSAGE;
 	char new_name[512];
 
 	strcpy_s(new_name, sizeof(new_name), "\\\\.\\pipe\\");
 	strcat_s(new_name, sizeof(new_name), name);
 
+	bool res = false;
+	AcquireSRWLockExclusive(&pipe->lock);
+	actually_free_pipe_client(pipe);
+
 	pipe->handle = CreateFileA(new_name, GENERIC_READ | GENERIC_WRITE,
 			0, NULL, OPEN_EXISTING, 0, NULL);
 	if (pipe->handle == INVALID_HANDLE_VALUE) {
-		return false;
+		goto release;
 	}
 
 	ULONG pid;
 	if (!GetNamedPipeServerProcessId(pipe->handle, &pid))
-		return false;
+		goto release;
 
 	pipe->server_process = OpenProcess(SYNCHRONIZE, false, pid);
 	if (pipe->server_process == INVALID_HANDLE_VALUE)
-		return false;
+		goto release;
 
-	return !!SetNamedPipeHandleState(pipe->handle, &mode, NULL, NULL);
+	res = !!SetNamedPipeHandleState(pipe->handle, &mode, NULL, NULL);
+
+release:
+	if (!res)
+		actually_free_pipe_client(pipe);
+
+	ReleaseSRWLockExclusive(&pipe->lock);
+	return res;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -246,12 +273,7 @@ void ipc_pipe_server_free(ipc_pipe_server_t *pipe)
 
 bool ipc_pipe_client_open(ipc_pipe_client_t *pipe, const char *name)
 {
-	if (!ipc_pipe_internal_open_pipe(pipe, name)) {
-		ipc_pipe_client_free(pipe);
-		return false;
-	}
-
-	return true;
+	return ipc_pipe_internal_open_pipe(pipe, name);
 }
 
 void ipc_pipe_client_free(ipc_pipe_client_t *pipe)
@@ -259,10 +281,19 @@ void ipc_pipe_client_free(ipc_pipe_client_t *pipe)
 	if (!pipe)
 		return;
 
-	if (pipe->handle)
-		CloseHandle(pipe->handle);
+	AcquireSRWLockExclusive(&pipe->lock);
 
-	memset(pipe, 0, sizeof(*pipe));
+	actually_free_pipe_client(pipe);
+
+	ReleaseSRWLockExclusive(&pipe->lock);
+}
+
+static void invalidate_pipe_client(ipc_pipe_client_t *pipe)
+{
+	AcquireSRWLockExclusive(&pipe->lock);
+	if (pipe->write_failed)
+		actually_free_pipe_client(pipe);
+	ReleaseSRWLockExclusive(&pipe->lock);
 }
 
 bool ipc_pipe_client_write(ipc_pipe_client_t *pipe, const void *data,
@@ -274,9 +305,23 @@ bool ipc_pipe_client_write(ipc_pipe_client_t *pipe, const void *data,
 		return false;
 	}
 
+	AcquireSRWLockShared(&pipe->lock);
+
+	bool res = false;
 	if (!pipe->handle || pipe->handle == INVALID_HANDLE_VALUE) {
-		return false;
+		goto release;
 	}
 
-	return !!WriteFile(pipe->handle, data, (DWORD)size, &bytes, NULL);
+	res = !!WriteFile(pipe->handle, data, (DWORD)size, &bytes, NULL);
+
+	if (!res)
+		pipe->write_failed = true;
+
+release:
+	ReleaseSRWLockShared(&pipe->lock);
+
+	if (!res)
+		invalidate_pipe_client(pipe);
+
+	return res;
 }

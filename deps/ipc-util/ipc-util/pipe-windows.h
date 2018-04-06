@@ -34,12 +34,21 @@ struct ipc_pipe_server {
 struct ipc_pipe_client {
 	HANDLE                     handle;
 	HANDLE                     server_process;
+	SRWLOCK                    lock;
+	bool                       write_failed;
 };
 
 static inline bool ipc_pipe_client_valid(ipc_pipe_client_t *pipe)
 {
-	return pipe->handle != NULL && pipe->handle != INVALID_HANDLE_VALUE &&
+	if (!TryAcquireSRWLockShared(&pipe->lock))
+		return false;
+
+	bool res = !pipe->write_failed && pipe->handle != NULL && pipe->handle != INVALID_HANDLE_VALUE &&
 		(pipe->server_process == NULL ||
 		(pipe->server_process != INVALID_HANDLE_VALUE &&
 		WaitForSingleObject(pipe->server_process, 0) == WAIT_TIMEOUT));
+
+	ReleaseSRWLockShared(&pipe->lock);
+
+	return res;
 }
