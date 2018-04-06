@@ -960,6 +960,8 @@ bool hook_gl(void)
 
 	rehook(&swap_buffers);
 
+	apply_hooks();
+
 	hooked_gl_module = gl;
 
 	hlog("Hooked OpenGL");

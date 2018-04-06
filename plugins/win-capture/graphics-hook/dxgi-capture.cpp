@@ -473,6 +473,8 @@ bool hook_dxgi(void)
 	if (present1_addr)
 		rehook(&present1);
 
+	apply_hooks();
+
 	hooked_dxgi_module = dxgi_module;
 
 	hlog("Hooked DXGI");

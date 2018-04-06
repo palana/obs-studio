@@ -1,7 +1,11 @@
 #include <windows.h>
 #include <stdlib.h>
+#include "graphics-hook-config.h"
 #include "funchook.h"
 
+#define UNUSED_PARAMETER(param) (void)param
+
+#if !(USE_MINHOOK)
 #define JMP_64_SIZE            14
 #define JMP_32_SIZE            5
 
@@ -13,6 +17,7 @@ static inline void fix_permissions(void *addr, size_t size)
 	DWORD protect_val;
 	VirtualProtect(addr, size, PAGE_EXECUTE_READWRITE, &protect_val);
 }
+#endif
 
 void hook_init(struct func_hook *hook,
 		void *func_addr, void *hook_addr, const char *name)
@@ -23,12 +28,17 @@ void hook_init(struct func_hook *hook,
 	hook->hook_addr = (uintptr_t)hook_addr;
 	hook->name = name;
 
+#if USE_MINHOOK
+	MH_CreateHook(func_addr, hook_addr, &hook->call_addr);
+#else
 	fix_permissions((void*)(hook->func_addr - JMP_32_SIZE),
 			JMP_64_SIZE + JMP_32_SIZE);
 
 	memcpy(hook->unhook_data, func_addr, JMP_64_SIZE);
+#endif
 }
 
+#if !(USE_MINHOOK)
 static inline size_t patch_size(struct func_hook *hook)
 {
 	return hook->is_64bit_jump ? JMP_64_SIZE : JMP_32_SIZE;
@@ -208,9 +218,26 @@ static void setup_64bit_bounce(struct func_hook *hook, intptr_t *offset)
 		hook->is_64bit_jump = false;
 	}
 }
+#endif
+
+void apply_hooks(void)
+{
+#if USE_MINHOOK
+	MH_ApplyQueued();
+#endif
+}
 
 void do_hook(struct func_hook *hook, bool force)
 {
+#if USE_MINHOOK
+	UNUSED_PARAMETER(force);
+
+	if (hook->hooked)
+		return;
+
+	MH_QueueEnableHook((void*)hook->func_addr);
+	hook->hooked = true;
+#else
 	intptr_t offset;
 
 	if (!force && hook->hooked)
@@ -254,10 +281,14 @@ void do_hook(struct func_hook *hook, bool force)
 #endif
 
 	rehook32(hook, force, offset);
+#endif
 }
 
 void unhook(struct func_hook *hook)
 {
+#if USE_MINHOOK
+	UNUSED_PARAMETER(hook);
+#else
 	uintptr_t addr;
 	size_t size;
 
@@ -279,8 +310,10 @@ void unhook(struct func_hook *hook)
 		memcpy((void*)hook->func_addr, hook->unhook_data, size);
 
 	hook->hooked = false;
+#endif
 }
 
+#if !(USE_MINHOOK)
 static bool check_forward_chain(struct func_hook *hook, intptr_t offset)
 {
 	uint8_t *p = (uint8_t*)hook->func_addr - JMP_32_SIZE;
@@ -298,9 +331,14 @@ static bool check_reverse_chain(struct func_hook *hook)
 	uint8_t *p = (uint8_t*)hook->func_addr - JMP_32_SIZE;
 	return *((uint32_t*)&p[1]) == (uint32_t)(hook->hook_addr - hook->func_addr);
 }
+#endif
 
 bool check_hook(struct func_hook *hook)
 {
+#if USE_MINHOOK
+	UNUSED_PARAMETER(hook);
+	return true;
+#else
 	if (!hook->started)
 		return false;
 
@@ -332,4 +370,5 @@ bool check_hook(struct func_hook *hook)
 	}
 
 	return false;
+#endif
 }

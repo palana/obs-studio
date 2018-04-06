@@ -3,6 +3,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#if USE_MINHOOK
+#include "MinHook.h"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #else
@@ -36,6 +40,7 @@ struct func_hook {
 extern void hook_init(struct func_hook *hook,
 		void *func_addr, void *hook_addr, const char *name);
 extern void hook_start(struct func_hook *hook);
+extern void apply_hooks(void);
 extern void do_hook(struct func_hook *hook, bool force);
 extern void unhook(struct func_hook *hook);
 extern bool check_hook(struct func_hook *hook);

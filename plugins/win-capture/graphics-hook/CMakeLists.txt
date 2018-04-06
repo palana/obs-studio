@@ -2,6 +2,16 @@ project(graphics-hook)
 
 set(COMPILE_D3D12_HOOK FALSE CACHE BOOL "Compile D3D12 hook support (required windows 10 SDK)")
 
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set(_minhook_lib_name "libMinHook.x64.lib")
+else()
+    set(_minhook_lib_name "libMinHook.x86.lib")
+endif()
+
+set(USE_MINHOOK FALSE CACHE BOOL "Use MinHook")
+set(MinHook_INCLUDE_DIRS "$ENV{MinHook}/include" CACHE PATH "MinHook include directory")
+set(MinHook_LIBRARIES "$ENV{MinHook}/build/VC14/lib/Release/${_minhook_lib_name}" CACHE FILEPATH "MinHook library file")
+
 configure_file(
 	"${CMAKE_CURRENT_SOURCE_DIR}/graphics-hook-config.h.in"
 	"${CMAKE_BINARY_DIR}/plugins/win-capture/graphics-hook/config/graphics-hook-config.h")
@@ -41,6 +51,13 @@ add_library(graphics-hook MODULE
 
 target_include_directories(graphics-hook PUBLIC
 	"${CMAKE_BINARY_DIR}/plugins/win-capture/graphics-hook/config")
+
+if(USE_MINHOOK)
+    target_include_directories(graphics-hook PUBLIC
+        "${MinHook_INCLUDE_DIRS}")
+    target_link_libraries(graphics-hook
+        "${MinHook_LIBRARIES}")
+endif()
 
 target_link_libraries(graphics-hook
 	ipc-util psapi)

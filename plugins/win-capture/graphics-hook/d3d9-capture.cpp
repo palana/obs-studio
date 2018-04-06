@@ -1125,6 +1125,8 @@ bool hook_d3d9(void)
 		rehook(&present);
 	}
 
+	apply_hooks();
+
 	hooked_d3d9_module = d3d9_module;
 	hlog("Hooked D3D9");
 	return true;

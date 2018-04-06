@@ -388,6 +388,8 @@ bool hook_d3d8(void)
 
 	rehook(&present);
 
+	apply_hooks();
+
 	hlog("Hooked D3D8");
 	return true;
 }

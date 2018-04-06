@@ -374,6 +374,13 @@ static inline bool init_hook(HANDLE thread_handle)
 	if (!init_pipe()) {
 		init_log("init_pipe failed");
 	}
+#if USE_MINHOOK
+	MH_STATUS sts = MH_Initialize();
+	if (sts != MH_OK) {
+		init_log("MH_Initialize failed: %d", sts);
+		return false;
+	}
+#endif
 	if (!init_signals()) {
 		return false;
 	}
