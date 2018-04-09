@@ -1040,6 +1040,8 @@ static void log_d3d9_module_path(HMODULE loaded_d3d9_module)
 	hlog("log_d3d9_module_path: %ls", module_path);
 }
 
+static uint64_t hook_init_time = 0;
+
 static HMODULE hooked_d3d9_module = nullptr;
 static bool d3d9_module_mismatch_logged = false;
 bool hook_d3d9(void)
@@ -1127,6 +1129,8 @@ bool hook_d3d9(void)
 
 	apply_hooks();
 
+	hook_init_time = os_gettime_ns();
+
 	hooked_d3d9_module = d3d9_module;
 	hlog("Hooked D3D9");
 	return true;
@@ -1160,6 +1164,12 @@ bool check_d3d9()
 		}
 		return true;
 	}
+
+#if USE_MINHOOK
+	uint64_t cur = os_gettime_ns();
+	if (hook_init_time < cur && (cur - hook_init_time) > HOOK_CHECK_TIME_NS)
+		return false;
+#endif
 
 	return check_hook(&present_swap) ||
 		check_hook(&present_ex) ||

@@ -911,6 +911,8 @@ static bool gl_register_window(void)
 	return true;
 }
 
+static uint64_t hook_init_time = 0;
+
 static HMODULE hooked_gl_module = NULL;
 bool hook_gl(void)
 {
@@ -962,6 +964,8 @@ bool hook_gl(void)
 
 	apply_hooks();
 
+	hook_init_time = os_gettime_ns();
+
 	hooked_gl_module = gl;
 
 	hlog("Hooked OpenGL");
@@ -999,6 +1003,14 @@ bool check_gl(void)
 		}
 		goto cleanup;
 	}
+
+#if USE_MINHOOK
+	uint64_t cur = os_gettime_ns();
+	if (hook_init_time < cur && (cur - hook_init_time) > HOOK_CHECK_TIME_NS) {
+		hooks_ok = false;
+		goto cleanup;
+	}
+#endif
 
 	hooks_ok = check_hook(&wgl_delete_context) ||
 		check_hook(&wgl_swap_layer_buffers) ||

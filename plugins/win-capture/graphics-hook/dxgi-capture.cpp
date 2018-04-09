@@ -380,6 +380,8 @@ static pD3DCompile get_compiler(void)
 	return compile;
 }
 
+static uint64_t hook_init_time = 0;
+
 static uint8_t vertex_shader_data[1024];
 static uint8_t pixel_shader_data[1024];
 static size_t vertex_shader_size = 0;
@@ -475,6 +477,8 @@ bool hook_dxgi(void)
 
 	apply_hooks();
 
+	hook_init_time = os_gettime_ns();
+
 	hooked_dxgi_module = dxgi_module;
 
 	hlog("Hooked DXGI");
@@ -521,6 +525,12 @@ bool check_dxgi()
 		}
 		return true;
 	}
+
+#if USE_MINHOOK
+	uint64_t cur = os_gettime_ns();
+	if (hook_init_time < cur && (cur - hook_init_time) > HOOK_CHECK_TIME_NS)
+		return false;
+#endif
 
 	return check_hook(&present) && check_hook(&resize_buffers);
 }

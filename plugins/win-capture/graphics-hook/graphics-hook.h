@@ -11,6 +11,10 @@
 #include <ipc-util/pipe.h>
 #include <psapi.h>
 
+#if USE_MINHOOK
+#define HOOK_CHECK_TIME_NS (60ull * 1000 * 1000 * 1000)
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #else

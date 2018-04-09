@@ -554,6 +554,16 @@ static inline bool attempt_hook(void)
 		ddraw_hooked = hook_ddraw();
 	}*/
 
+#if USE_MINHOOK
+	if (!modules_logged &&
+		(d3d9_hooked || dxgi_hooked || gl_hooked) &&
+		(d3d9_broken == d3d9_hooked && dxgi_broken == dxgi_broken && gl_broken == gl_hooked)) {
+		hlog("attempt_hook: some hooks appear to be inactive (d3d9: %d, dxgi: %d, gl: %d)",
+			d3d9_broken, dxgi_broken, gl_broken);
+		list_process_modules();
+		modules_logged = true;
+	}
+#else
 	if (!modules_logged &&
 		(d3d9_broken || dxgi_broken || gl_broken)) {
 		hlog("attempt_hook: some hooks appear to be broken (d3d9: %d, dxgi: %d, gl: %d)",
@@ -561,6 +571,7 @@ static inline bool attempt_hook(void)
 		list_process_modules();
 		modules_logged = true;
 	}
+#endif
 
 	return d3d8_hooked || d3d9_hooked ||
 		dxgi_hooked || gl_hooked;
