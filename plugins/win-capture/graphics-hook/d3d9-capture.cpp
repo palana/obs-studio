@@ -958,6 +958,8 @@ static void setup_reset_hooks(IDirect3DDevice9 *device)
 		d3d9ex->Release();
 	}
 
+	apply_hooks();
+
 	hooked_reset = true;
 }
 
