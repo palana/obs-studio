@@ -185,6 +185,11 @@ AddSourceDialog::AddSourceDialog(QWidget *parent) :
 		ex_sources->SetSourceType(source_id);
 		ui->addNewSource->setEnabled(valid);
 		ui->sourceNameLineEdit->setEnabled(valid);
+
+		if (valid && ui->addExistingSource->isDefault())
+			ui->addExistingSource->setDefault(false);
+		ui->addNewSource->setDefault(valid);
+
 		if (valid)
 			ui->sourceNameLineEdit->setText(get_new_source_name(obs_source_get_display_name(source_id))->array);
 	});
@@ -196,6 +201,10 @@ AddSourceDialog::AddSourceDialog(QWidget *parent) :
 		auto valid = !list.empty();
 
 		ui->addExistingSource->setEnabled(valid);
+
+		if (valid && ui->addNewSource->isDefault())
+			ui->addNewSource->setDefault(false);
+		ui->addExistingSource->setDefault(valid);
 	});
 
 	connect(ui->sourceNameLineEdit, &QLineEdit::returnPressed,
