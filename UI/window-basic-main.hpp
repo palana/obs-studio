@@ -488,6 +488,8 @@ private:
 	void AddSourcePopupMenu(const QPoint &pos);
 	void copyActionsDynamicProperties();
 
+	QPointer<QWidget> addSourceDialog;
+
 	static void HotkeyTriggered(void *data, obs_hotkey_id id, bool pressed);
 
 public:

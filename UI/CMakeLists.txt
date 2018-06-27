@@ -173,7 +173,8 @@ set(obs_SOURCES
 	source-label.cpp
 	remote-text.cpp
 	audio-encoders.cpp
-	qt-wrappers.cpp)
+	qt-wrappers.cpp
+	addsourcedialog.cpp)
 
 set(obs_HEADERS
 	${obs_PLATFORM_HEADERS}
@@ -224,7 +225,8 @@ set(obs_HEADERS
 	source-label.hpp
 	remote-text.hpp
 	audio-encoders.hpp
-	qt-wrappers.hpp)
+	qt-wrappers.hpp
+	addsourcedialog.hpp)
 
 set(obs_UI
 	forms/NameDialog.ui
@@ -241,7 +243,8 @@ set(obs_UI
 	forms/OBSBasicSourceSelect.ui
 	forms/OBSBasicInteraction.ui
 	forms/OBSUpdate.ui
-	forms/OBSRemux.ui)
+	forms/OBSRemux.ui
+	forms/AddSourceDialog.ui)
 
 set(obs_QRC
 	forms/obs.qrc)

@@ -55,6 +55,7 @@
 #include "volume-control.hpp"
 #include "remote-text.hpp"
 #include "source-tree.hpp"
+#include "addsourcedialog.hpp"
 
 #ifdef _WIN32
 #include "win-update/win-update.hpp"
@@ -3281,6 +3282,7 @@ void OBSBasic::CloseDialogs()
 
 	if (!stats.isNull()) stats->close(); //call close to save Stats geometry
 	if (!remux.isNull()) remux->close();
+	if (addSourceDialog) addSourceDialog->close();
 }
 
 void OBSBasic::EnumDialogs()
@@ -4081,7 +4083,25 @@ void OBSBasic::AddSourcePopupMenu(const QPoint &pos)
 
 void OBSBasic::on_actionAddSource_triggered()
 {
-	AddSourcePopupMenu(QCursor::pos());
+	if (!addSourceDialog) {
+		QPointer<AddSourceDialog> dialog = new AddSourceDialog(this);
+		dialog->setAttribute(Qt::WA_DeleteOnClose, true);
+
+
+		connect(dialog, &AddSourceDialog::newSourceCreated,
+				[=](obs_source_t *source)
+				{
+					if (!source)
+						return;
+
+					CreatePropertiesWindow(source);
+				});
+
+		addSourceDialog = dialog;
+	}
+
+	addSourceDialog->show();
+	addSourceDialog->raise();
 }
 
 static bool remove_items(obs_scene_t *, obs_sceneitem_t *item, void *param)
