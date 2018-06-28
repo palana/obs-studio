@@ -190,8 +190,17 @@ AddSourceDialog::AddSourceDialog(QWidget *parent) :
 			ui->addExistingSource->setDefault(false);
 		ui->addNewSource->setDefault(valid);
 
-		if (valid)
+		if (valid) {
+			auto display_name = obs_source_get_display_name(source_id);
+			ui->existingSourcesLabel->setText(QTStr("AddSource.SelectExisting.ExistingSources").arg(display_name));
+			ui->addNewSource->setText(QTStr("AddSource.AddNewButton.AddType").arg(display_name));
 			ui->sourceNameLineEdit->setText(get_new_source_name(obs_source_get_display_name(source_id))->array);
+		} else {
+			ui->existingSourcesLabel->setText(QTStr("AddSource.SelectExisting.SelectType"));
+			ui->addNewSource->setText(QTStr("AddSource.AddNewButton.SelectType"));
+			ui->addExistingSource->setText(QTStr("AddSource.AddExistingButton.SelectExisting"));
+			ui->existingSourcesLabel->setText(QTStr("AddSource.SelectExisting.SelectType"));
+		}
 	});
 
 	connect(ui->existingSources->selectionModel(), &QItemSelectionModel::selectionChanged,
@@ -205,6 +214,11 @@ AddSourceDialog::AddSourceDialog(QWidget *parent) :
 		if (valid && ui->addNewSource->isDefault())
 			ui->addNewSource->setDefault(false);
 		ui->addExistingSource->setDefault(valid);
+
+		if (valid)
+			ui->addExistingSource->setText(QTStr("AddSource.AddExistingButton.AddExisting"));
+		else
+			ui->addExistingSource->setText(QTStr("AddSource.AddExistingButton.SelectExisting"));
 	});
 
 	connect(ui->sourceNameLineEdit, &QLineEdit::returnPressed,

@@ -43,7 +43,7 @@
         <bool>false</bool>
        </property>
        <property name="text">
-        <string>Add A New Source</string>
+        <string>AddSource.AddNewButton.SelectType</string>
        </property>
       </widget>
      </item>
@@ -93,7 +93,7 @@
         <bool>false</bool>
        </property>
        <property name="text">
-        <string>Add This Existing Source</string>
+        <string>AddSource.AddExistingButton.SelectExisting</string>
        </property>
       </widget>
      </item>
@@ -116,14 +116,14 @@
      <item row="0" column="0">
       <widget class="QLabel" name="sourceTypesLabel">
        <property name="text">
-        <string>Select A Source Type</string>
+        <string>AddSource.SelectType</string>
        </property>
       </widget>
      </item>
      <item row="0" column="3">
       <widget class="QLabel" name="existingSourcesLabel">
        <property name="text">
-        <string>Existing Sources</string>
+        <string>AddSource.SelectExisting.SelectType</string>
        </property>
       </widget>
      </item>
@@ -148,7 +148,7 @@
        <item row="0" column="0">
         <widget class="QLabel" name="sourceNameLabel">
          <property name="text">
-          <string>SourceName</string>
+          <string>AddSource.SourceName</string>
          </property>
         </widget>
        </item>
