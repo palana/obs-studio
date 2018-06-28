@@ -16,9 +16,37 @@
 #include <utility>
 #include <vector>
 
+static std::string fixed_source_order[] = {
+	"window_capture",   // windows + macos
+
+	"game_capture",     // windows
+	"syphon-input",     // macos
+
+	"obs_browser",
+
+	"dshow_input",      // windows
+	"av_capture_input", // macos
+
+	"image_source",
+	"slideshow",
+	"ffmpeg_source",
+
+	"monitor_capture",  // windows
+	"display_capture",  // macos
+};
+
+namespace {
+	struct source_info {
+		const char *id_;
+		uint32_t caps;
+		int8_t order;
+		QString display_name;
+		QImage image;
+	};
+}
+
 struct SourceTypeModel : QAbstractListModel {
-	std::vector<const char*> source_ids;
-	std::map<const char*, std::pair<const char*, QImage>> source_info;
+	std::vector<source_info> source_types;
 
 	QWidget *target = nullptr;
 
@@ -37,11 +65,24 @@ struct SourceTypeModel : QAbstractListModel {
 			if ((caps & OBS_SOURCE_CAP_DISABLED) != 0)
 				continue;
 
-			source_ids.push_back(id_);
+			auto it = find(begin(fixed_source_order), end(fixed_source_order), id_);
+			auto dist = static_cast<int8_t>(distance(begin(fixed_source_order), it));
 
-			source_info[id_] = std::make_pair(display_name,
-					LoadSourceImage(source_icon_dir, id_));
+			source_types.push_back({ id_, caps, dist, QString::fromUtf8(display_name), LoadSourceImage(source_icon_dir, id_) });
 		}
+
+		std::sort(begin(source_types), end(source_types), [](const source_info &a, const source_info &b)
+		{
+			if (a.order != b.order)
+				return a.order < b.order;
+
+			auto deprecated_a = (a.caps & OBS_SOURCE_DEPRECATED) != 0;
+			auto deprecated_b = (b.caps & OBS_SOURCE_DEPRECATED) != 0;
+			if (deprecated_a != deprecated_b)
+				return deprecated_a;
+
+			return a.display_name < b.display_name;
+		});
 	}
 
 	QImage LoadSourceImage(const QDir &dir, const char *source_id)
@@ -58,7 +99,7 @@ struct SourceTypeModel : QAbstractListModel {
 
 	int rowCount(const QModelIndex &/*parent*/=QModelIndex()) const override
 	{
-		return static_cast<int>(source_ids.size());
+		return static_cast<int>(source_types.size());
 	}
 
 	QVariant data(const QModelIndex &index, int role=Qt::DisplayRole) const override
@@ -67,17 +108,14 @@ struct SourceTypeModel : QAbstractListModel {
 			return {};
 
 		auto row = index.row();
-		if (row < 0 || static_cast<size_t>(row) >= source_ids.size())
+		if (row < 0 || static_cast<size_t>(row) >= source_types.size())
 			return {};
 
-		auto it = source_info.find(source_ids[row]);
-		if (it == std::end(source_info))
-			return {};
-
+		auto &info = source_types[row];
 		if (role == Qt::DecorationRole)
-			return it->second.second;
+			return info.image;
 
-		return QString(it->second.first);
+		return info.display_name;
 	}
 };
 
@@ -180,7 +218,7 @@ AddSourceDialog::AddSourceDialog(QWidget *parent) :
 	{
 		auto list = selected.indexes();
 		auto valid = !list.empty();
-		auto source_id = valid ? source_types->source_ids[list.front().row()] : nullptr;
+		auto source_id = valid ? source_types->source_types[list.front().row()].id_ : nullptr;
 
 		ex_sources->SetSourceType(source_id);
 		ui->addNewSource->setEnabled(valid);
@@ -257,7 +295,7 @@ void AddSourceDialog::AddNewSource()
 		return;
 
 	auto *source_types = static_cast<SourceTypeModel*>(sourceTypes.data());
-	auto source_id = source_types->source_ids[indexes.front().row()];
+	auto source_id = source_types->source_types[indexes.front().row()].id_;
 	if (!source_id)
 		return;
 
