@@ -119,8 +119,11 @@ struct SourceTypeModel : QAbstractListModel {
 	}
 };
 
+Q_DECLARE_METATYPE(OBSWeakSource);
+
 struct ExistingSourcesModel : QAbstractListModel {
-	std::vector<OBSSource> sources;
+	std::vector<OBSWeakSource> sources;
+	std::string id_str;
 
 	QWidget *target = nullptr;
 
@@ -142,7 +145,10 @@ struct ExistingSourcesModel : QAbstractListModel {
 		if (row < 0 || static_cast<size_t>(row) >= sources.size())
 			return {};
 
-		auto &source = sources[row];
+		auto source = OBSGetStrongRef(sources[row]);
+		if (!source)
+			return {};
+
 		return QString::fromUtf8(obs_source_get_name(source));
 	}
 
@@ -153,12 +159,12 @@ struct ExistingSourcesModel : QAbstractListModel {
 		sources.clear();
 
 		if (id_) {
-			std::string id_str = id_;
+			id_str = id_;
 			auto enum_func = [&](obs_source_t *src)
 			{
 				auto id_ = obs_source_get_id(src);
 				if (id_ && id_ == id_str)
-					sources.push_back(src);
+					sources.push_back(OBSGetWeakRef(src));
 			};
 			using enum_func_t = decltype(enum_func);
 
@@ -167,9 +173,62 @@ struct ExistingSourcesModel : QAbstractListModel {
 				(*static_cast<enum_func_t*>(context))(src);
 				return true;
 			}, static_cast<void*>(&enum_func));
+
+		} else {
+			id_str.clear();
 		}
 
 		endResetModel();
+	}
+
+	decltype(cbegin(sources)) FindSource(OBSWeakSource src_) const
+	{
+		auto src = OBSGetStrongRef(src_);
+		if (!src)
+			return cend(sources);
+
+		auto id_ = obs_source_get_id(src);
+		if (!id_ || id_ != id_str)
+			return cend(sources);
+
+		return find_if(cbegin(sources), cend(sources), [&](OBSWeakSource source)
+		{
+			return obs_weak_source_references_source(source, src);
+		});
+	}
+
+	void SourceDestroyed(OBSWeakSource src_)
+	{
+		auto it = FindSource(src_);
+		if (it == end(sources))
+			return;
+
+		auto idx = static_cast<int>(std::distance(cbegin(sources), it));
+		beginRemoveRows(createIndex(0, 0), idx, idx);
+		sources.erase(it);
+		endRemoveRows();
+	}
+
+	void SourceRenamed(OBSWeakSource src_)
+	{
+		auto it = FindSource(src_);
+		if (it == end(sources))
+			return;
+
+		auto idx = static_cast<int>(std::distance(cbegin(sources), it));
+		emit dataChanged(createIndex(idx, 0), createIndex(idx, 0));
+	}
+
+	void SourceCreated(OBSWeakSource src_)
+	{
+		auto it = FindSource(src_);
+		if (it != end(sources))
+			return;
+
+		auto new_idx = static_cast<int>(sources.size());
+		beginInsertRows(createIndex(0, 0), new_idx, new_idx);
+		sources.push_back(src_);
+		endInsertRows();
 	}
 };
 
@@ -197,6 +256,11 @@ static DStr get_new_source_name(const char *name)
 	return new_name;
 }
 
+
+static AddSourceDialog *cast(void *ctx)
+{
+	return static_cast<AddSourceDialog*>(ctx);
+}
 
 AddSourceDialog::AddSourceDialog(QWidget *parent) :
 	QDialog(parent),
@@ -275,6 +339,25 @@ AddSourceDialog::AddSourceDialog(QWidget *parent) :
 	{
 		AddExistingSource();
 	});
+
+
+	auto sig = obs_get_signal_handler();
+
+	sourceDestroyed.Connect(sig, "source_destroy", [](void *ctx, calldata_t *data)
+	{
+		auto src = static_cast<obs_source_t*>(calldata_ptr(data, "source"));
+		QMetaObject::invokeMethod(cast(ctx), "SourceDestroyed", Q_ARG(OBSWeakSource, OBSGetWeakRef(src)));
+	}, this);
+	sourceRenamed.Connect(sig, "source_rename", [](void *ctx, calldata_t *data)
+	{
+		auto src = static_cast<obs_source_t*>(calldata_ptr(data, "source"));
+		QMetaObject::invokeMethod(cast(ctx), "SourceRenamed", Q_ARG(OBSWeakSource, OBSGetWeakRef(src)));
+	}, this);
+	sourceCreated.Connect(sig, "source_create", [](void *ctx, calldata_t *data)
+	{
+		auto src = static_cast<obs_source_t*>(calldata_ptr(data, "source"));
+		QMetaObject::invokeMethod(cast(ctx), "SourceCreated", Q_ARG(OBSWeakSource, OBSGetWeakRef(src)));
+	}, this);
 }
 
 AddSourceDialog::~AddSourceDialog()
@@ -336,7 +419,7 @@ void AddSourceDialog::AddExistingSource()
 		return;
 
 	auto *ex_sources = static_cast<ExistingSourcesModel*>(existingSources.data());
-	obs_source_t *source = ex_sources->sources[indexes.front().row()];
+	obs_source_t *source = OBSGetStrongRef(ex_sources->sources[indexes.front().row()]);
 	if (!source)
 		return;
 
@@ -347,4 +430,22 @@ void AddSourceDialog::AddExistingSource()
 	obs_source_release(source);
 
 	close();
+}
+
+void AddSourceDialog::SourceDestroyed(OBSWeakSource source)
+{
+	auto *ex_sources = static_cast<ExistingSourcesModel*>(existingSources.data());
+	ex_sources->SourceRenamed(source);
+}
+
+void AddSourceDialog::SourceRenamed(OBSWeakSource source)
+{
+	auto *ex_sources = static_cast<ExistingSourcesModel*>(existingSources.data());
+	ex_sources->SourceRenamed(source);
+}
+
+void AddSourceDialog::SourceCreated(OBSWeakSource source)
+{
+	auto *ex_sources = static_cast<ExistingSourcesModel*>(existingSources.data());
+	ex_sources->SourceCreated(source);
 }

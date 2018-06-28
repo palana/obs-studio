@@ -27,8 +27,17 @@ private:
 	QPointer<QAbstractListModel> sourceTypes;
 	QPointer<QAbstractListModel> existingSources;
 
+	OBSSignal sourceDestroyed;
+	OBSSignal sourceRenamed;
+	OBSSignal sourceCreated;
+
 	void AddNewSource();
 	void AddExistingSource();
+
+private slots:
+	void SourceDestroyed(OBSWeakSource source);
+	void SourceRenamed(OBSWeakSource source);
+	void SourceCreated(OBSWeakSource source);
 };
 
 #endif // ADDSOURCEDIALOG_H
