@@ -139,12 +139,11 @@ struct ExistingSourcesModel : QAbstractListModel {
 			return {};
 
 		auto row = index.row();
-		if (row < 0 || static_cast<size_t>(row) >= sources.size()) {
+		if (row < 0 || static_cast<size_t>(row) >= sources.size())
 			return {};
-		}
 
 		auto &source = sources[row];
-		return QString(obs_source_get_name(source));
+		return QString::fromUtf8(obs_source_get_name(source));
 	}
 
 	void SetSourceType(const char *id_)
