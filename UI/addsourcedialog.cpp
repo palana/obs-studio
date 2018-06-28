@@ -358,6 +358,9 @@ AddSourceDialog::AddSourceDialog(QWidget *parent) :
 		auto src = static_cast<obs_source_t*>(calldata_ptr(data, "source"));
 		QMetaObject::invokeMethod(cast(ctx), "SourceCreated", Q_ARG(OBSWeakSource, OBSGetWeakRef(src)));
 	}, this);
+
+
+	installEventFilter(CreateShortcutFilter());
 }
 
 AddSourceDialog::~AddSourceDialog()
