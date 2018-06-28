@@ -181,17 +181,17 @@ struct ExistingSourcesModel : QAbstractListModel {
 		endResetModel();
 	}
 
-	decltype(cbegin(sources)) FindSource(OBSWeakSource src_) const
+	decltype(sources.cbegin()) FindSource(OBSWeakSource src_) const
 	{
 		auto src = OBSGetStrongRef(src_);
 		if (!src)
-			return cend(sources);
+			return sources.cend();
 
 		auto id_ = obs_source_get_id(src);
 		if (!id_ || id_ != id_str)
-			return cend(sources);
+			return sources.cend();
 
-		return find_if(cbegin(sources), cend(sources), [&](OBSWeakSource source)
+		return find_if(sources.cbegin(), sources.cend(), [&](OBSWeakSource source)
 		{
 			return obs_weak_source_references_source(source, src);
 		});
@@ -203,7 +203,7 @@ struct ExistingSourcesModel : QAbstractListModel {
 		if (it == end(sources))
 			return;
 
-		auto idx = static_cast<int>(std::distance(cbegin(sources), it));
+		auto idx = static_cast<int>(std::distance(sources.cbegin(), it));
 		beginRemoveRows(createIndex(0, 0), idx, idx);
 		sources.erase(it);
 		endRemoveRows();
@@ -215,7 +215,7 @@ struct ExistingSourcesModel : QAbstractListModel {
 		if (it == end(sources))
 			return;
 
-		auto idx = static_cast<int>(std::distance(cbegin(sources), it));
+		auto idx = static_cast<int>(std::distance(sources.cbegin(), it));
 		emit dataChanged(createIndex(idx, 0), createIndex(idx, 0));
 	}
 
