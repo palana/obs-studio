@@ -263,7 +263,7 @@ static AddSourceDialog *cast(void *ctx)
 }
 
 AddSourceDialog::AddSourceDialog(QWidget *parent) :
-	QDialog(parent),
+	QDialog(parent, Qt::WindowTitleHint | Qt::CustomizeWindowHint | Qt::WindowCloseButtonHint),
 	ui(new Ui::AddSourceDialog),
 	sourceTypes(new SourceTypeModel(ui->sourceTypes)),
 	existingSources(new ExistingSourcesModel(ui->existingSources))
