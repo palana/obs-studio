@@ -263,18 +263,18 @@ static AddSourceDialog *cast(void *ctx)
 }
 
 AddSourceDialog::AddSourceDialog(QWidget *parent) :
-	QDialog(parent, Qt::WindowTitleHint | Qt::CustomizeWindowHint | Qt::WindowCloseButtonHint),
+	QDialog(parent),
 	ui(new Ui::AddSourceDialog),
 	sourceTypes(new SourceTypeModel(ui->sourceTypes)),
 	existingSources(new ExistingSourcesModel(ui->existingSources))
 {
 	ui->setupUi(this);
 
-	ui->sourceTypes->setModel(sourceTypes);
-	ui->existingSources->setModel(existingSources);
+	ui->sourceTypes->setModel(sourceTypes.get());
+	ui->existingSources->setModel(existingSources.get());
 
-	auto *source_types = static_cast<SourceTypeModel*>(sourceTypes.data());
-	auto *ex_sources = static_cast<ExistingSourcesModel*>(existingSources.data());
+	auto *source_types = static_cast<SourceTypeModel*>(sourceTypes.get());
+	auto *ex_sources = static_cast<ExistingSourcesModel*>(existingSources.get());
 
 	connect(ui->sourceTypes->selectionModel(), &QItemSelectionModel::selectionChanged,
 			[=](const QItemSelection &selected, const QItemSelection &/*deselected*/)
