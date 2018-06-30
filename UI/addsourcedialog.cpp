@@ -436,18 +436,18 @@ void AddSourceDialog::AddExistingSource()
 
 void AddSourceDialog::SourceDestroyed(OBSWeakSource source)
 {
-	auto *ex_sources = static_cast<ExistingSourcesModel*>(existingSources.data());
+	auto *ex_sources = static_cast<ExistingSourcesModel*>(existingSources.get());
 	ex_sources->SourceRenamed(source);
 }
 
 void AddSourceDialog::SourceRenamed(OBSWeakSource source)
 {
-	auto *ex_sources = static_cast<ExistingSourcesModel*>(existingSources.data());
+	auto *ex_sources = static_cast<ExistingSourcesModel*>(existingSources.get());
 	ex_sources->SourceRenamed(source);
 }
 
 void AddSourceDialog::SourceCreated(OBSWeakSource source)
 {
-	auto *ex_sources = static_cast<ExistingSourcesModel*>(existingSources.data());
+	auto *ex_sources = static_cast<ExistingSourcesModel*>(existingSources.get());
 	ex_sources->SourceCreated(source);
 }
