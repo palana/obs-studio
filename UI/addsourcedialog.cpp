@@ -93,7 +93,6 @@ struct SourceTypeModel : QAbstractListModel {
 		if (!dir.exists(source_filename->array))
 			return{};
 
-		blog(LOG_INFO, "loaded");
 		return QImage(dir.filePath(source_filename->array));
 	}
 
@@ -379,7 +378,7 @@ void AddSourceDialog::AddNewSource()
 	if (indexes.empty())
 		return;
 
-	auto *source_types = static_cast<SourceTypeModel*>(sourceTypes.data());
+	auto *source_types = static_cast<SourceTypeModel*>(sourceTypes.get());
 	auto source_id = source_types->source_types[indexes.front().row()].id_;
 	if (!source_id)
 		return;
@@ -421,7 +420,7 @@ void AddSourceDialog::AddExistingSource()
 	if (indexes.empty())
 		return;
 
-	auto *ex_sources = static_cast<ExistingSourcesModel*>(existingSources.data());
+	auto *ex_sources = static_cast<ExistingSourcesModel*>(existingSources.get());
 	obs_source_t *source = OBSGetStrongRef(ex_sources->sources[indexes.front().row()]);
 	if (!source)
 		return;

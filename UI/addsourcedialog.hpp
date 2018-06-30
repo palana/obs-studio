@@ -7,6 +7,8 @@
 
 #include <obs.hpp>
 
+#include <memory>
+
 namespace Ui {
 class AddSourceDialog;
 }
@@ -24,8 +26,8 @@ signals:
 
 private:
 	Ui::AddSourceDialog *ui;
-	QPointer<QAbstractListModel> sourceTypes;
-	QPointer<QAbstractListModel> existingSources;
+	std::unique_ptr<QAbstractListModel> sourceTypes;
+	std::unique_ptr<QAbstractListModel> existingSources;
 
 	OBSSignal sourceDestroyed;
 	OBSSignal sourceRenamed;

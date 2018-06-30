@@ -1892,6 +1892,9 @@ OBSBasic::~OBSBasic()
 	if (advAudioWindow)
 		delete advAudioWindow;
 
+	if (addSourceDialog)
+		delete addSourceDialog;
+
 	obs_display_remove_draw_callback(ui->preview->GetDisplay(),
 			OBSBasic::RenderMain, this);
 
