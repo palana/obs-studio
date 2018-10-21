@@ -1745,7 +1745,7 @@ void obs_load_sources(obs_data_array_t *array, obs_load_source_cb cb,
 	pthread_mutex_lock(&data->sources_mutex);
 
 	for (i = 0; i < count; i++) {
-		obs_data_t   *source_data = obs_data_array_item(array, i);
+		obs_data_t   *source_data = obs_data_array_item(array, count - i - 1);
 		obs_source_t *source      = obs_load_source(source_data);
 
 		da_push_back(sources, &source);
