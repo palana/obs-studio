@@ -27,7 +27,7 @@ BerryessaEveryMinute::BerryessaEveryMinute(
 {
 
 #ifdef WIN32
-	shared_counters_->wmi_queries_ = WMIQueries::Create();
+	//shared_counters_->wmi_queries_ = WMIQueries::Create();
 #endif
 	shared_counters_->frame_counters_ = InitFrameCounters();
 
@@ -164,9 +164,8 @@ void BerryessaEveryMinute::fire()
 				    shared_counters->encoder_counters_, event);
 
 #ifdef _WIN32
-			if (shared_counters->wmi_queries_.has_value())
-				shared_counters->wmi_queries_->SummarizeData(
-					event);
+			//if (shared_counters->wmi_queries_.has_value())
+			//	shared_counters->wmi_queries_->SummarizeData(event);
 #endif
 			auto buffer = QDateTime::currentDateTimeUtc()
 					      .toString(Qt::ISODateWithMs)

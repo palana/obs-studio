@@ -258,11 +258,11 @@ void gs_shader::Compile(const char *shaderString, const char *file,
 			cacheFile.seekg(0, ios::beg);
 
 			len -= sizeof(checksum);
-			D3DCreateBlob(len, shader);
+			D3DCreateBlob((SIZE_T)len, shader);
 			cacheFile.read((char *)(*shader)->GetBufferPointer(),
 				       len);
 			uint64_t calculated_checksum = fnv1a_hash(
-				(char *)(*shader)->GetBufferPointer(), len);
+				(char *)(*shader)->GetBufferPointer(), (size_t)len);
 
 			cacheFile.read((char *)&checksum, sizeof(checksum));
 			if (calculated_checksum != checksum)
