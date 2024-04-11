@@ -39,6 +39,7 @@ class AutoConfig : public QWizard {
 	enum class Service {
 		Twitch,
 		YouTube,
+		AmazonIVS,
 		Other,
 	};
 
@@ -97,6 +98,7 @@ class AutoConfig : public QWizard {
 	bool bandwidthTest = false;
 	bool testRegions = true;
 	bool twitchAuto = false;
+	bool amazonIVSAuto = false;
 	bool regionUS = true;
 	bool regionEU = true;
 	bool regionAsia = true;
