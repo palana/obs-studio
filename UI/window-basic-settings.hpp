@@ -195,6 +195,8 @@ private:
 		      const char *value);
 	void SaveSpinBox(QSpinBox *widget, const char *section,
 			 const char *value);
+	void SaveText(QPlainTextEdit *widget, const char *section,
+		      const char *value);
 	void SaveFormat(QComboBox *combo);
 	void SaveEncoder(QComboBox *combo, const char *section,
 			 const char *value);
@@ -275,7 +277,7 @@ private:
 
 	/* stream */
 	void InitStreamPage();
-	inline bool IsCustomService() const;
+	bool IsCustomService() const;
 	inline bool IsWHIP() const;
 	void LoadServices(bool showAll);
 	void OnOAuthStreamKeyConnected();
@@ -294,6 +296,7 @@ private:
 	void UpdateServiceRecommendations();
 	void UpdateMoreInfoLink();
 	void UpdateAdvNetworkGroup();
+	void UpdateMultitrackVideo();
 
 	/* Appearance */
 	void InitAppearancePage();
@@ -427,6 +430,11 @@ private slots:
 
 	void on_service_currentIndexChanged(int idx);
 	void on_customServer_textChanged(const QString &text);
+	void on_enableMultitrackVideo_toggled(bool enabled);
+	void
+	on_multitrackVideoMaximumAggregateBitrateAuto_toggled(bool enabled);
+	void on_multitrackVideoMaximumVideoTracksAuto_toggled(bool enabled);
+	void on_multitrackVideoConfigOverrideEnable_toggled(bool enabled);
 	void on_simpleOutputBrowse_clicked();
 	void on_advOutRecPathBrowse_clicked();
 	void on_advOutFFPathBrowse_clicked();
