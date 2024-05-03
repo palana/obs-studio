@@ -10,7 +10,8 @@ GoLiveApi::PostData
 constructGoLivePost(QString streamKey,
 		    const std::optional<uint64_t> &maximum_aggregate_bitrate,
 		    const std::optional<uint32_t> &maximum_video_tracks,
-		    bool vod_track_enabled)
+		    bool vod_track_enabled,
+		    const std::map<std::string, video_t *> &extra_views)
 {
 	GoLiveApi::PostData post_data{};
 	post_data.service = "IVS";
@@ -34,6 +35,25 @@ constructGoLivePost(QString streamKey,
 
 		client.canvas_width = ovi.base_width;
 		client.canvas_height = ovi.base_height;
+	}
+
+	if (!extra_views.empty()) {
+		auto &extra_views_capability =
+			*post_data.capabilities.extra_views;
+		extra_views_capability.reserve(extra_views.size());
+		for (auto &view : extra_views) {
+			video_t *video = view.second;
+			if (!video)
+				continue;
+			const struct video_output_info *voi =
+				video_output_get_info(video);
+			if (!voi)
+				continue;
+			extra_views_capability.push_back(GoLiveApi::ExtraView{
+				view.first, voi->width, voi->height,
+				media_frames_per_second{voi->fps_num,
+							voi->fps_den}});
+		}
 	}
 
 	auto &preferences = post_data.preferences;
