@@ -93,6 +93,7 @@ target_sources(
           goliveapi-network.hpp
           goliveapi-postdata.cpp
           goliveapi-postdata.hpp
+          models/multitrack-video.hpp
           multitrack-video-error.cpp
           multitrack-video-error.hpp
           multitrack-video-output.cpp

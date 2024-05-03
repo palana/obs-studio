@@ -10,11 +10,7 @@
 #include <util/windows/win-registry.h>
 #include <util/windows/win-version.h>
 
-#include <nlohmann/json.hpp>
-
-using json = nlohmann::json;
-
-json system_gpu_data()
+static std::optional<std::vector<GoLiveApi::Gpu>> system_gpu_data()
 {
 	ComPtr<IDXGIFactory1> factory;
 	ComPtr<IDXGIAdapter1> adapter;
@@ -23,9 +19,9 @@ json system_gpu_data()
 
 	hr = CreateDXGIFactory1(IID_PPV_ARGS(&factory));
 	if (FAILED(hr))
-		return nullptr;
+		return std::nullopt;
 
-	json adapter_info;
+	std::vector<GoLiveApi::Gpu> adapter_info;
 
 	DStr luid_buffer;
 	for (i = 0; factory->EnumAdapters1(i, adapter.Assign()) == S_OK; ++i) {
@@ -43,19 +39,19 @@ json system_gpu_data()
 
 		os_wcs_to_utf8(desc.Description, 0, name, sizeof(name));
 
-		json data;
-		data["model"] = name;
+		GoLiveApi::Gpu data;
+		data.model = name;
 
-		data["vendor_id"] = desc.VendorId;
-		data["device_id"] = desc.DeviceId;
+		data.vendor_id = desc.VendorId;
+		data.device_id = desc.DeviceId;
 
-		data["dedicated_video_memory"] = desc.DedicatedVideoMemory;
-		data["shared_system_memory"] = desc.SharedSystemMemory;
+		data.dedicated_video_memory = desc.DedicatedVideoMemory;
+		data.shared_system_memory = desc.SharedSystemMemory;
 
 		dstr_printf(luid_buffer, "luid_0x%08X_0x%08X",
 			    desc.AdapterLuid.HighPart,
 			    desc.AdapterLuid.LowPart);
-		data["luid"] = luid_buffer->array;
+		data.luid = luid_buffer->array;
 
 		/* driver version */
 		LARGE_INTEGER umd;
@@ -70,7 +66,7 @@ json system_gpu_data()
 			snprintf(driver_version, sizeof(driver_version),
 				 "%" PRIu16 ".%" PRIu16 ".%" PRIu16 ".%" PRIu16,
 				 aa, bb, ccccc, ddddd);
-			data["driver_version"] = driver_version;
+			data.driver_version = driver_version;
 		}
 
 		adapter_info.push_back(data);
@@ -121,16 +117,17 @@ static void get_processor_info(char **name, DWORD *speed)
 #define WIN10_HAGS_REG_KEY \
 	L"SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers"
 
-static json get_gaming_features_data(const win_version_info &ver)
+static std::optional<GoLiveApi::GamingFeatures>
+get_gaming_features_data(const win_version_info &ver)
 {
 	uint32_t win_ver = (ver.major << 8) | ver.minor;
 	if (win_ver < 0xA00)
-		return nullptr;
+		return std::nullopt;
 
-	json fdata;
+	GoLiveApi::GamingFeatures gaming_features;
 
 	struct feature_mapping_s {
-		const char *name;
+		std::optional<bool> *field;
 		HKEY hkey;
 		LPCWSTR sub_key;
 		LPCWSTR value_name;
@@ -139,20 +136,20 @@ static json get_gaming_features_data(const win_version_info &ver)
 		DWORD disabled_value;
 	};
 	struct feature_mapping_s features[] = {
-		{"game_bar_enabled", HKEY_CURRENT_USER, WIN10_GAME_BAR_REG_KEY,
-		 L"AppCaptureEnabled", 0, false, 0},
-		{"game_dvr_allowed", HKEY_CURRENT_USER,
+		{&gaming_features.game_bar_enabled, HKEY_CURRENT_USER,
+		 WIN10_GAME_BAR_REG_KEY, L"AppCaptureEnabled", 0, false, 0},
+		{&gaming_features.game_dvr_allowed, HKEY_CURRENT_USER,
 		 WIN10_GAME_DVR_POLICY_REG_KEY, L"AllowGameDVR", 0, false, 0},
-		{"game_dvr_enabled", HKEY_CURRENT_USER, WIN10_GAME_DVR_REG_KEY,
-		 L"GameDVR_Enabled", 0, false, 0},
-		{"game_dvr_bg_recording", HKEY_CURRENT_USER,
+		{&gaming_features.game_dvr_enabled, HKEY_CURRENT_USER,
+		 WIN10_GAME_DVR_REG_KEY, L"GameDVR_Enabled", 0, false, 0},
+		{&gaming_features.game_dvr_bg_recording, HKEY_CURRENT_USER,
 		 WIN10_GAME_BAR_REG_KEY, L"HistoricalCaptureEnabled", 0, false,
 		 0},
-		{"game_mode_enabled", HKEY_CURRENT_USER,
+		{&gaming_features.game_mode_enabled, HKEY_CURRENT_USER,
 		 WIN10_GAME_MODE_REG_KEY, L"AutoGameModeEnabled",
 		 L"AllowAutoGameMode", false, 0},
-		{"hags_enabled", HKEY_LOCAL_MACHINE, WIN10_HAGS_REG_KEY,
-		 L"HwSchMode", 0, true, 1}};
+		{&gaming_features.hags_enabled, HKEY_LOCAL_MACHINE,
+		 WIN10_HAGS_REG_KEY, L"HwSchMode", 0, true, 1}};
 
 	for (int i = 0; i < sizeof(features) / sizeof(*features); ++i) {
 		struct reg_dword info;
@@ -167,14 +164,14 @@ static json get_gaming_features_data(const win_version_info &ver)
 		}
 
 		if (info.status == ERROR_SUCCESS) {
-			fdata[features[i].name] = info.return_value !=
-						  features[i].disabled_value;
+			*features[i].field = info.return_value !=
+					     features[i].disabled_value;
 		} else if (features[i].non_existence_is_false) {
-			fdata[features[i].name] = false;
+			*features[i].field = false;
 		}
 	}
 
-	return fdata;
+	return gaming_features;
 }
 
 static inline bool get_reg_sz(HKEY key, const wchar_t *val, wchar_t *buf,
@@ -231,30 +228,30 @@ static inline void get_reg_ver(struct win_version_info *ver)
 	RegCloseKey(key);
 }
 
-json system_info()
+void system_info(GoLiveApi::Capabilities &capabilities)
 {
 	char tmpstr[1024];
 
-	json data;
+	capabilities.gpu = system_gpu_data();
 
 	{
-		auto &cpu_data = data["cpu"];
-		cpu_data["physical_cores"] = os_get_physical_cores();
-		cpu_data["logical_cores"] = os_get_logical_cores();
+		auto &cpu_data = capabilities.cpu;
+		cpu_data.physical_cores = os_get_physical_cores();
+		cpu_data.logical_cores = os_get_logical_cores();
 		DWORD processorSpeed;
 		char *processorName;
 		get_processor_info(&processorName, &processorSpeed);
 		if (processorSpeed)
-			cpu_data["speed"] = processorSpeed;
+			cpu_data.speed = processorSpeed;
 		if (processorName)
-			cpu_data["name"] = processorName;
+			cpu_data.name = processorName;
 		bfree(processorName);
 	}
 
 	{
-		auto &memory_data = data["memory"];
-		memory_data["total"] = os_get_sys_total_size();
-		memory_data["free"] = os_get_sys_free_size();
+		auto &memory_data = capabilities.memory;
+		memory_data.total = os_get_sys_total_size();
+		memory_data.free = os_get_sys_free_size();
 	}
 
 	struct win_version_info ver;
@@ -262,22 +259,20 @@ json system_info()
 	get_reg_ver(&ver);
 
 	// Gaming features
-	data["gaming_features"] = get_gaming_features_data(ver);
+	capabilities.gaming_features = get_gaming_features_data(ver);
 
 	{
-		auto &system_data = data["system"];
+		auto &system_data = capabilities.system;
 
 		snprintf(tmpstr, sizeof(tmpstr), "%d.%d", ver.major, ver.minor);
 
-		system_data["version"] = tmpstr;
-		system_data["name"] = "Windows";
-		system_data["build"] = ver.build;
-		system_data["release"] = win_release_id;
-		system_data["revision"] = ver.revis;
-		system_data["bits"] = is_64_bit_windows() ? 64 : 32;
-		system_data["arm"] = is_arm64_windows();
-		system_data["armEmulation"] = os_get_emulation_status();
+		system_data.version = tmpstr;
+		system_data.name = "Windows";
+		system_data.build = ver.build;
+		system_data.release = win_release_id;
+		system_data.revision = ver.revis;
+		system_data.bits = is_64_bit_windows() ? 64 : 32;
+		system_data.arm = is_arm64_windows();
+		system_data.armEmulation = os_get_emulation_status();
 	}
-
-	return data;
 }

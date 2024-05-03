@@ -1,6 +1,5 @@
 #pragma once
 
-#include <nlohmann/json_fwd.hpp>
+#include "models/multitrack-video.hpp"
 
-nlohmann::json system_gpu_data();
-nlohmann::json system_info();
+void system_info(GoLiveApi::Capabilities &capabilities);

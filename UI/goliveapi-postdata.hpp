@@ -3,9 +3,9 @@
 #include <obs.hpp>
 #include <optional>
 #include <QString>
-#include <nlohmann/json_fwd.hpp>
+#include "models/multitrack-video.hpp"
 
-nlohmann::json
+GoLiveApi::PostData
 constructGoLivePost(QString streamKey,
 		    const std::optional<uint64_t> &maximum_aggregate_bitrate,
 		    const std::optional<uint32_t> &maximum_video_tracks,

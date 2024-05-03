@@ -1,14 +1,6 @@
 #include "system-info.hpp"
-#include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
-
-json system_gpu_data()
+void system_info(GoLiveApi::Capabilities &capabilities)
 {
-	return nullptr;
-}
-
-json system_info()
-{
-	return nullptr;
+	UNUSED_PARAMETER(capabilities);
 }
