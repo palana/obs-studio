@@ -7037,9 +7037,6 @@ void OBSBasic::StartStreaming()
 
 	setStreamText(QTStr("Basic.Main.PreparingStream"));
 
-	if (api)
-		api->on_event(OBS_FRONTEND_EVENT_STREAMING_PREPARING);
-
 	auto holder = outputHandler->SetupStreaming(service);
 	auto future = holder.future.then(
 		this, [&, setStreamText](bool setupStreamingResult) {
