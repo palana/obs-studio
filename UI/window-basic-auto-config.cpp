@@ -465,7 +465,10 @@ bool AutoConfigStreamPage::validatePage()
 			for (auto &endpoint : config.ingest_endpoints) {
 				const char *p = endpoint.protocol.c_str();
 				const char *auth =
-					endpoint.authentication.c_str();
+					endpoint.authentication
+						? endpoint.authentication
+							  ->c_str()
+						: nullptr;
 				if (qstrnicmp("RTMP", p, 4) == 0 && auth &&
 				    *auth) {
 					wiz->key = auth;

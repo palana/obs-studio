@@ -73,11 +73,12 @@ create_service(const GoLiveApi::Config &go_live_config,
 			continue;
 
 		url = endpoint.url_template.c_str();
-		if (!endpoint.authentication.empty()) {
+		if (endpoint.authentication &&
+		    !endpoint.authentication->empty()) {
 			blog(LOG_INFO,
 			     "Using stream key supplied by autoconfig");
-			stream_key =
-				QString::fromStdString(endpoint.authentication);
+			stream_key = QString::fromStdString(
+				*endpoint.authentication);
 		}
 		break;
 	}
@@ -388,7 +389,7 @@ void MultitrackVideoOutput::PrepareStreaming(
 			return;
 		}
 	}
-	GoLiveApi::Config go_live_config;
+	std::optional<GoLiveApi::Config> go_live_config;
 	std::optional<GoLiveApi::Config> custom;
 	bool is_custom_config = custom_config.has_value();
 	auto auto_config_url = MultitrackVideoAutoConfigURL(service);
@@ -432,13 +433,21 @@ void MultitrackVideoOutput::PrepareStreaming(
 	     vod_track_info_storage->array ? vod_track_info_storage->array
 					   : "No");
 
-	auto go_live_post = constructGoLivePost(stream_key,
-						maximum_aggregate_bitrate,
-						maximum_video_tracks,
-						vod_track_mixer.has_value());
+	const bool custom_config_only =
+		auto_config_url.isEmpty() &&
+		MultitrackVideoDeveloperModeEnabled() &&
+		custom_config.has_value() &&
+		strcmp(obs_service_get_id(service), "rtmp_custom") == 0;
 
-	go_live_config = DownloadGoLiveConfig(
-		parent, auto_config_url, go_live_post, multitrack_video_name);
+	if (!custom_config_only) {
+		auto go_live_post = constructGoLivePost(
+			stream_key, maximum_aggregate_bitrate,
+			maximum_video_tracks, vod_track_mixer.has_value());
+
+		go_live_config = DownloadGoLiveConfig(parent, auto_config_url,
+						      go_live_post,
+						      multitrack_video_name);
+	}
 
 	if (custom_config.has_value()) {
 		GoLiveApi::Config parsed_custom;
@@ -452,10 +461,13 @@ void MultitrackVideoOutput::PrepareStreaming(
 		}
 
 		// copy unique ID from go live request
-		parsed_custom.meta.config_id = go_live_config.meta.config_id;
-		blog(LOG_INFO,
-		     "Using config_id from go live config with custom config: %s",
-		     parsed_custom.meta.config_id.c_str());
+		if (go_live_config.has_value()) {
+			parsed_custom.meta.config_id =
+				go_live_config->meta.config_id;
+			blog(LOG_INFO,
+			     "Using config_id from go live config with custom config: %s",
+			     parsed_custom.meta.config_id.c_str());
+		}
 
 		nlohmann::json custom_data = parsed_custom;
 		blog(LOG_INFO, "Using custom go live config: %s",
@@ -464,14 +476,25 @@ void MultitrackVideoOutput::PrepareStreaming(
 		custom.emplace(std::move(parsed_custom));
 	}
 
-	blog(LOG_INFO, "Enhanced broadcasting config_id: '%s'",
-	     go_live_config.meta.config_id.c_str());
+	if (go_live_config.has_value()) {
+		blog(LOG_INFO, "Enhanced broadcasting config_id: '%s'",
+		     go_live_config->meta.config_id.c_str());
+	}
+
+	if (!go_live_config && !custom) {
+		blog(LOG_ERROR,
+		     "MultitrackVideoOutput: no config set, this should never happen");
+		throw MultitrackVideoError::warning(
+			QTStr("FailedToStartStream.NoConfig"));
+	}
+
+	const auto &output_config = custom ? *custom : *go_live_config;
+	const auto &service_config = go_live_config ? *go_live_config : *custom;
 
 	auto audio_encoders = std::vector<OBSEncoderAutoRelease>();
 	auto video_encoders = std::vector<OBSEncoderAutoRelease>();
 	OBSEncoderAutoRelease audio_encoder = nullptr;
-	auto outputs = SetupOBSOutput(dump_stream_to_file_config,
-				      custom ? *custom : go_live_config,
+	auto outputs = SetupOBSOutput(dump_stream_to_file_config, output_config,
 				      audio_encoders, video_encoders,
 				      audio_encoder_id, vod_track_mixer);
 	auto output = std::move(outputs.output);
@@ -482,7 +505,7 @@ void MultitrackVideoOutput::PrepareStreaming(
 				.arg(multitrack_video_name));
 
 	auto multitrack_video_service =
-		create_service(go_live_config, rtmp_url, stream_key);
+		create_service(service_config, rtmp_url, stream_key);
 	if (!multitrack_video_service)
 		throw MultitrackVideoError::warning(
 			QTStr("FailedToStartStream.FallbackToDefault")

@@ -250,10 +250,11 @@ struct Status {
 struct IngestEndpoint {
 	string protocol;
 	string url_template;
-	string authentication;
+	optional<string> authentication;
 
-	NLOHMANN_DEFINE_TYPE_INTRUSIVE(IngestEndpoint, protocol, url_template,
-				       authentication)
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(IngestEndpoint, protocol,
+						    url_template,
+						    authentication)
 };
 
 struct VideoEncoderConfiguration {
