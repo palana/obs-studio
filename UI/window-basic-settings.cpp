@@ -6505,20 +6505,19 @@ void OBSBasicSettings::UpdateMultitrackVideo()
 
 		auto multitrack_video_name =
 			QTStr("Basic.Settings.Stream.MultitrackVideoLabel");
-		if (obs_data_has_user_value(settings,
-					    "ertmp_multitrack_video_name"))
+		if (obs_data_has_user_value(settings, "multitrack_video_name"))
 			multitrack_video_name = obs_data_get_string(
-				settings, "ertmp_multitrack_video_name");
+				settings, "multitrack_video_name");
 
 		ui->enableMultitrackVideo->setText(
 			QTStr("Basic.Settings.Stream.EnableMultitrackVideo")
 				.arg(multitrack_video_name));
 
-		if (obs_data_has_user_value(
-			    settings, "ertmp_multitrack_video_disclaimer")) {
+		if (obs_data_has_user_value(settings,
+					    "multitrack_video_disclaimer")) {
 			ui->multitrackVideoInfo->setVisible(true);
 			ui->multitrackVideoInfo->setText(obs_data_get_string(
-				settings, "ertmp_multitrack_video_disclaimer"));
+				settings, "multitrack_video_disclaimer"));
 		} else {
 			ui->multitrackVideoInfo->setText(
 				QTStr("MultitrackVideo.Info")
