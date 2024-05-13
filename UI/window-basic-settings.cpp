@@ -6314,14 +6314,9 @@ void OBSBasicSettings::UpdateMultitrackVideo()
 			ui->enableMultitrackVideo->setChecked(false);
 	}
 
-	ui->multitrackVideoInfo->setVisible(available);
-	ui->enableMultitrackVideo->setVisible(available);
+	ui->multitrackVideoGroupBox->setVisible(available);
 
 	ui->enableMultitrackVideo->setEnabled(toggle_available);
-
-	ui->multitrackVideoMaximumAggregateBitrateLabel->setVisible(available);
-	ui->multitrackVideoMaximumAggregateBitrateAuto->setVisible(available);
-	ui->multitrackVideoMaximumAggregateBitrate->setVisible(available);
 
 	ui->multitrackVideoMaximumAggregateBitrateLabel->setEnabled(
 		toggle_available && ui->enableMultitrackVideo->isChecked());
@@ -6330,10 +6325,6 @@ void OBSBasicSettings::UpdateMultitrackVideo()
 	ui->multitrackVideoMaximumAggregateBitrate->setEnabled(
 		toggle_available && ui->enableMultitrackVideo->isChecked() &&
 		!ui->multitrackVideoMaximumAggregateBitrateAuto->isChecked());
-
-	ui->multitrackVideoMaximumVideoTracksLabel->setVisible(available);
-	ui->multitrackVideoMaximumVideoTracksAuto->setVisible(available);
-	ui->multitrackVideoMaximumVideoTracks->setVisible(available);
 
 	ui->multitrackVideoMaximumVideoTracksLabel->setEnabled(
 		toggle_available && ui->enableMultitrackVideo->isChecked());
