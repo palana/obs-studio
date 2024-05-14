@@ -891,29 +891,7 @@ OBSBasicSettings::OBSBasicSettings(QWidget *parent)
 
 	obs_properties_destroy(ppts);
 
-	auto init_multitrack_video_disabled_setting = [](QWidget *widget) {
-		widget->setVisible(false);
-		setThemeID(widget, "warning");
-	};
-
-	init_multitrack_video_disabled_setting(
-		ui->multitrackVideoDisabledSettingsSimpleStreaming);
-	init_multitrack_video_disabled_setting(
-		ui->multitrackVideoDisabledSettingsAdvStreaming);
-	init_multitrack_video_disabled_setting(
-		ui->multitrackVideoDisabledSettingsAdvEncoder);
-	init_multitrack_video_disabled_setting(
-		ui->multitrackVideoDisabledSettingsAdvAudioTrack1);
-	init_multitrack_video_disabled_setting(
-		ui->multitrackVideoDisabledSettingsAdvAudioTrack2);
-	init_multitrack_video_disabled_setting(
-		ui->multitrackVideoDisabledSettingsAdvAudioTrack3);
-	init_multitrack_video_disabled_setting(
-		ui->multitrackVideoDisabledSettingsAdvAudioTrack4);
-	init_multitrack_video_disabled_setting(
-		ui->multitrackVideoDisabledSettingsAdvAudioTrack5);
-	init_multitrack_video_disabled_setting(
-		ui->multitrackVideoDisabledSettingsAdvAudioTrack6);
+	ui->multitrackVideoNoticeBox->setVisible(false);
 
 	InitStreamPage();
 	InitAppearancePage();
@@ -6418,8 +6396,6 @@ void OBSBasicSettings::UpdateMultitrackVideo()
 					       vod_track_idx_enabled(1));
 		auto track1_disabled = track1_warning_visible &&
 				       !ui->advOutRecTrack1->isChecked();
-		ui->multitrackVideoDisabledSettingsAdvAudioTrack1->setVisible(
-			track1_warning_visible);
 		ui->advOutTrack1BitrateLabel->setDisabled(track1_disabled);
 		ui->advOutTrack1Bitrate->setDisabled(track1_disabled);
 
@@ -6428,8 +6404,6 @@ void OBSBasicSettings::UpdateMultitrackVideo()
 					       vod_track_idx_enabled(2));
 		auto track2_disabled = track2_warning_visible &&
 				       !ui->advOutRecTrack2->isChecked();
-		ui->multitrackVideoDisabledSettingsAdvAudioTrack2->setVisible(
-			track2_warning_visible);
 		ui->advOutTrack2BitrateLabel->setDisabled(track2_disabled);
 		ui->advOutTrack2Bitrate->setDisabled(track2_disabled);
 
@@ -6438,8 +6412,6 @@ void OBSBasicSettings::UpdateMultitrackVideo()
 					       vod_track_idx_enabled(3));
 		auto track3_disabled = track3_warning_visible &&
 				       !ui->advOutRecTrack3->isChecked();
-		ui->multitrackVideoDisabledSettingsAdvAudioTrack3->setVisible(
-			track3_warning_visible);
 		ui->advOutTrack3BitrateLabel->setDisabled(track3_disabled);
 		ui->advOutTrack3Bitrate->setDisabled(track3_disabled);
 
@@ -6448,8 +6420,6 @@ void OBSBasicSettings::UpdateMultitrackVideo()
 					       vod_track_idx_enabled(4));
 		auto track4_disabled = track4_warning_visible &&
 				       !ui->advOutRecTrack4->isChecked();
-		ui->multitrackVideoDisabledSettingsAdvAudioTrack4->setVisible(
-			track4_warning_visible);
 		ui->advOutTrack4BitrateLabel->setDisabled(track4_disabled);
 		ui->advOutTrack4Bitrate->setDisabled(track4_disabled);
 
@@ -6458,8 +6428,6 @@ void OBSBasicSettings::UpdateMultitrackVideo()
 					       vod_track_idx_enabled(5));
 		auto track5_disabled = track5_warning_visible &&
 				       !ui->advOutRecTrack5->isChecked();
-		ui->multitrackVideoDisabledSettingsAdvAudioTrack5->setVisible(
-			track5_warning_visible);
 		ui->advOutTrack5BitrateLabel->setDisabled(track5_disabled);
 		ui->advOutTrack5Bitrate->setDisabled(track5_disabled);
 
@@ -6468,8 +6436,6 @@ void OBSBasicSettings::UpdateMultitrackVideo()
 					       vod_track_idx_enabled(6));
 		auto track6_disabled = track6_warning_visible &&
 				       !ui->advOutRecTrack6->isChecked();
-		ui->multitrackVideoDisabledSettingsAdvAudioTrack6->setVisible(
-			track6_warning_visible);
 		ui->advOutTrack6BitrateLabel->setDisabled(track6_disabled);
 		ui->advOutTrack6Bitrate->setDisabled(track6_disabled);
 	};
@@ -6521,47 +6487,16 @@ void OBSBasicSettings::UpdateMultitrackVideo()
 				.arg(ui->service->currentText())
 				.arg(multitrack_video_name);
 
-		ui->multitrackVideoDisabledSettingsSimpleStreaming->setText(
-			disabled_text);
-
-		ui->multitrackVideoDisabledSettingsAdvStreaming->setText(
-			disabled_text);
-		ui->multitrackVideoDisabledSettingsAdvEncoder->setText(
-			disabled_text);
-
-		ui->multitrackVideoDisabledSettingsAdvAudioTrack1->setText(
-			disabled_text);
-		ui->multitrackVideoDisabledSettingsAdvAudioTrack2->setText(
-			disabled_text);
-		ui->multitrackVideoDisabledSettingsAdvAudioTrack3->setText(
-			disabled_text);
-		ui->multitrackVideoDisabledSettingsAdvAudioTrack4->setText(
-			disabled_text);
-		ui->multitrackVideoDisabledSettingsAdvAudioTrack5->setText(
-			disabled_text);
-		ui->multitrackVideoDisabledSettingsAdvAudioTrack6->setText(
-			disabled_text);
+		ui->multitrackVideoNotice->setText(disabled_text);
 
 		auto mtv_enabled = ui->enableMultitrackVideo->isChecked();
-		ui->multitrackVideoDisabledSettingsSimpleStreaming->setVisible(
-			mtv_enabled);
-
-		ui->multitrackVideoDisabledSettingsAdvStreaming->setVisible(
-			mtv_enabled);
-		ui->multitrackVideoDisabledSettingsAdvEncoder->setVisible(
-			mtv_enabled);
+		ui->multitrackVideoNoticeBox->setVisible(mtv_enabled);
 
 		update_simple_output_settings(mtv_enabled);
 		update_advanced_output_settings(mtv_enabled);
 		update_advanced_output_audio_tracks(mtv_enabled);
 	} else {
-		ui->multitrackVideoDisabledSettingsSimpleStreaming->setVisible(
-			false);
-
-		ui->multitrackVideoDisabledSettingsAdvStreaming->setVisible(
-			false);
-		ui->multitrackVideoDisabledSettingsAdvEncoder->setVisible(
-			false);
+		ui->multitrackVideoNoticeBox->setVisible(false);
 
 		update_simple_output_settings(false);
 		update_advanced_output_settings(false);

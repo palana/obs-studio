@@ -1768,6 +1768,25 @@
              <number>0</number>
             </property>
             <item>
+             <widget class="QFrame" name="multitrackVideoNoticeBox">
+              <property name="themeID" stdset="0">
+               <string notr="true">notice</string>
+              </property>
+              <layout class="QVBoxLayout" name="multitrackVideoNoticeBoxLayout">
+               <item>
+                <widget class="QLabel" name="multitrackVideoNotice">
+                 <property name="text">
+                  <string>Basic.Settings.MultitrackVideoDisabledSettings</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
              <widget class="QFrame" name="widget">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -1927,17 +1946,7 @@
                        <property name="bottomMargin">
                         <number>9</number>
                        </property>
-                       <item row="0" colspan="2">
-                        <widget class="QLabel" name="multitrackVideoDisabledSettingsSimpleStreaming">
-                         <property name="text">
-                          <string>Basic.Settings.MultitrackVideoDisabledSettings</string>
-                         </property>
-                         <property name="alignment">
-                          <set>Qt::AlignCenter|Qt::AlignVCenter</set>
-                         </property>
-                        </widget>
-                       </item>
-                       <item row="1" column="0">
+                       <item row="0" column="0">
                         <widget class="QLabel" name="simpleOutputVBitrateLabel">
                          <property name="minimumSize">
                           <size>
@@ -1956,7 +1965,7 @@
                          </property>
                         </widget>
                        </item>
-                       <item row="1" column="1">
+                       <item row="0" column="1">
                         <widget class="QSpinBox" name="simpleOutputVBitrate">
                          <property name="minimum">
                           <number>200</number>
@@ -1969,7 +1978,7 @@
                          </property>
                         </widget>
                        </item>
-                       <item row="2" column="0">
+                       <item row="1" column="0">
                         <widget class="QLabel" name="simpleOutputABitrateLabel">
                          <property name="text">
                           <string>Basic.Settings.Output.AudioBitrate</string>
@@ -1979,7 +1988,7 @@
                          </property>
                         </widget>
                        </item>
-                       <item row="2" column="1">
+                       <item row="1" column="1">
                         <widget class="QComboBox" name="simpleOutputABitrate">
                          <property name="currentIndex">
                           <number>8</number>
@@ -2041,7 +2050,7 @@
                          </item>
                         </widget>
                        </item>
-                       <item row="3" column="0">
+                       <item row="2" column="0">
                         <widget class="QLabel" name="simpleOutStrEncoderLabel">
                          <property name="text">
                           <string>Basic.Settings.Output.Encoder.Video</string>
@@ -2051,10 +2060,10 @@
                          </property>
                         </widget>
                        </item>
-                       <item row="3" column="1">
+                       <item row="2" column="1">
                         <widget class="QComboBox" name="simpleOutStrEncoder"/>
                        </item>
-                       <item row="4" column="0">
+                       <item row="3" column="0">
                         <widget class="QLabel" name="simpleOutPresetLabel">
                          <property name="enabled">
                           <bool>true</bool>
@@ -2067,10 +2076,10 @@
                          </property>
                         </widget>
                        </item>
-                       <item row="4" column="1">
+                       <item row="3" column="1">
                         <widget class="QComboBox" name="simpleOutPreset"/>
                        </item>
-                       <item row="5" column="1">
+                       <item row="4" column="1">
                         <widget class="QCheckBox" name="simpleOutAdvanced">
                          <property name="text">
                           <string>Basic.Settings.Output.Advanced</string>
@@ -2080,7 +2089,7 @@
                          </property>
                         </widget>
                        </item>
-                       <item row="6" column="0">
+                       <item row="5" column="0">
                         <widget class="QLabel" name="simpleOutCustomLabel">
                          <property name="text">
                           <string>Basic.Settings.Output.CustomEncoderSettings</string>
@@ -2090,10 +2099,10 @@
                          </property>
                         </widget>
                        </item>
-                       <item row="6" column="1">
+                       <item row="5" column="1">
                         <widget class="QLineEdit" name="simpleOutCustom"/>
                        </item>
-                       <item row="7" column="0">
+                       <item row="6" column="0">
                         <widget class="QLabel" name="simpleOutStrAEncoderLabel">
                          <property name="text">
                           <string>Basic.Settings.Output.Encoder.Audio</string>
@@ -2103,7 +2112,7 @@
                          </property>
                         </widget>
                        </item>
-                       <item row="7" column="1">
+                       <item row="6" column="1">
                         <widget class="QComboBox" name="simpleOutStrAEncoder"/>
                        </item>
                       </layout>
@@ -2728,17 +2737,7 @@
                            <property name="bottomMargin">
                             <number>8</number>
                            </property>
-                           <item row="0" colspan="2">
-                            <widget class="QLabel" name="multitrackVideoDisabledSettingsAdvStreaming">
-                             <property name="text">
-                              <string>Basic.Settings.MultitrackVideoDisabledSettings</string>
-                             </property>
-                             <property name="alignment">
-                              <set>Qt::AlignCenter|Qt::AlignVCenter</set>
-                             </property>
-                            </widget>
-                           </item>
-                           <item row="2" column="0">
+                           <item row="1" column="0">
                             <widget class="QLabel" name="advStreamTrackWidgetLabel">
                              <property name="minimumSize">
                               <size>
@@ -2754,7 +2753,7 @@
                              </property>
                             </widget>
                            </item>
-                           <item row="2" column="1">
+                           <item row="1" column="1">
                             <widget class="QStackedWidget" name="advStreamTrackWidget">
                              <property name="sizePolicy">
                               <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
@@ -2892,27 +2891,27 @@
                              </widget>
                             </widget>
                            </item>
-                           <item row="3" column="0">
+                           <item row="2" column="0">
                             <widget class="QLabel" name="advOutAEncLabel">
                              <property name="text">
                               <string>Basic.Settings.Output.Encoder.Audio</string>
                              </property>
                             </widget>
                            </item>
-                           <item row="3" column="1">
+                           <item row="2" column="1">
                             <widget class="QComboBox" name="advOutAEncoder"/>
                            </item>
-                           <item row="4" column="0">
+                           <item row="3" column="0">
                             <widget class="QLabel" name="advOutEncLabel">
                              <property name="text">
                               <string>Basic.Settings.Output.Encoder.Video</string>
                              </property>
                             </widget>
                            </item>
-                           <item row="4" column="1">
+                           <item row="3" column="1">
                             <widget class="QComboBox" name="advOutEncoder"/>
                            </item>
-                           <item row="5" column="0">
+                           <item row="4" column="0">
                             <widget class="QLabel" name="advOutUseRescale">
                              <property name="sizePolicy">
                               <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
@@ -2928,7 +2927,7 @@
                              </property>
                             </widget>
                            </item>
-                           <item row="5" column="1">
+                           <item row="4" column="1">
                             <layout class="QHBoxLayout" name="horizontalLayout_10">
                              <item>
                               <widget class="QComboBox" name="advOutRescaleFilter"/>
@@ -2972,16 +2971,6 @@
                            <property name="bottomMargin">
                             <number>8</number>
                            </property>
-                           <item>
-                             <widget class="QLabel" name="multitrackVideoDisabledSettingsAdvEncoder">
-                             <property name="text">
-                               <string>Basic.Settings.MultitrackVideoDisabledSettings</string>
-                             </property>
-                             <property name="alignment">
-                               <set>Qt::AlignCenter|Qt::AlignVCenter</set>
-                             </property>
-                             </widget>
-                           </item>
                           </layout>
                          </widget>
                         </item>
@@ -4368,17 +4357,7 @@
                               <property name="bottomMargin">
                                <number>9</number>
                               </property>
-                              <item row="0" colspan="2">
-                                <widget class="QLabel" name="multitrackVideoDisabledSettingsAdvAudioTrack1">
-                                <property name="text">
-                                  <string>Basic.Settings.MultitrackVideoDisabledSettings</string>
-                                </property>
-                                <property name="alignment">
-                                  <set>Qt::AlignCenter|Qt::AlignVCenter</set>
-                                </property>
-                                </widget>
-                              </item>
-                              <item row="1" column="1">
+                              <item row="0" column="1">
                                <widget class="QComboBox" name="advOutTrack1Bitrate">
                                 <property name="sizePolicy">
                                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -4446,7 +4425,7 @@
                                 </item>
                                </widget>
                               </item>
-                              <item row="2" column="0">
+                              <item row="1" column="0">
                                <widget class="QLabel" name="label_55">
                                 <property name="text">
                                  <string>Name</string>
@@ -4456,7 +4435,7 @@
                                 </property>
                                </widget>
                               </item>
-                              <item row="2" column="1">
+                              <item row="1" column="1">
                                <widget class="QLineEdit" name="advOutTrack1Name">
                                 <property name="sizePolicy">
                                  <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -4466,7 +4445,7 @@
                                 </property>
                                </widget>
                               </item>
-                              <item row="1" column="0">
+                              <item row="0" column="0">
                                <widget class="QLabel" name="advOutTrack1BitrateLabel">
                                 <property name="minimumSize">
                                  <size>
@@ -4518,17 +4497,7 @@
                               <property name="bottomMargin">
                                <number>9</number>
                               </property>
-                              <item row="0" colspan="2">
-                                <widget class="QLabel" name="multitrackVideoDisabledSettingsAdvAudioTrack2">
-                                <property name="text">
-                                  <string>Basic.Settings.MultitrackVideoDisabledSettings</string>
-                                </property>
-                                <property name="alignment">
-                                  <set>Qt::AlignCenter|Qt::AlignVCenter</set>
-                                </property>
-                                </widget>
-                              </item>
-                              <item row="1" column="0">
+                              <item row="0" column="0">
                                <widget class="QLabel" name="advOutTrack2BitrateLabel">
                                 <property name="minimumSize">
                                  <size>
@@ -4547,7 +4516,7 @@
                                 </property>
                                </widget>
                               </item>
-                              <item row="1" column="1">
+                              <item row="0" column="1">
                                <widget class="QComboBox" name="advOutTrack2Bitrate">
                                 <property name="sizePolicy">
                                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -4615,7 +4584,7 @@
                                 </item>
                                </widget>
                               </item>
-                              <item row="2" column="0">
+                              <item row="1" column="0">
                                <widget class="QLabel" name="label_50">
                                 <property name="text">
                                  <string>Name</string>
@@ -4625,7 +4594,7 @@
                                 </property>
                                </widget>
                               </item>
-                              <item row="2" column="1">
+                              <item row="1" column="1">
                                <widget class="QLineEdit" name="advOutTrack2Name">
                                 <property name="sizePolicy">
                                  <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -4668,17 +4637,7 @@
                               <property name="bottomMargin">
                                <number>9</number>
                               </property>
-                              <item row="0" colspan="2">
-                                <widget class="QLabel" name="multitrackVideoDisabledSettingsAdvAudioTrack3">
-                                <property name="text">
-                                  <string>Basic.Settings.MultitrackVideoDisabledSettings</string>
-                                </property>
-                                <property name="alignment">
-                                  <set>Qt::AlignCenter|Qt::AlignVCenter</set>
-                                </property>
-                                </widget>
-                              </item>
-                              <item row="1" column="0">
+                              <item row="0" column="0">
                                <widget class="QLabel" name="advOutTrack3BitrateLabel">
                                 <property name="minimumSize">
                                  <size>
@@ -4697,7 +4656,7 @@
                                 </property>
                                </widget>
                               </item>
-                              <item row="1" column="1">
+                              <item row="0" column="1">
                                <widget class="QComboBox" name="advOutTrack3Bitrate">
                                 <property name="sizePolicy">
                                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -4765,7 +4724,7 @@
                                 </item>
                                </widget>
                               </item>
-                              <item row="2" column="0">
+                              <item row="1" column="0">
                                <widget class="QLabel" name="label_52">
                                 <property name="text">
                                  <string>Name</string>
@@ -4775,7 +4734,7 @@
                                 </property>
                                </widget>
                               </item>
-                              <item row="2" column="1">
+                              <item row="1" column="1">
                                <widget class="QLineEdit" name="advOutTrack3Name">
                                 <property name="sizePolicy">
                                  <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -4818,17 +4777,7 @@
                               <property name="bottomMargin">
                                <number>9</number>
                               </property>
-                              <item row="0" colspan="2">
-                                <widget class="QLabel" name="multitrackVideoDisabledSettingsAdvAudioTrack4">
-                                <property name="text">
-                                  <string>Basic.Settings.MultitrackVideoDisabledSettings</string>
-                                </property>
-                                <property name="alignment">
-                                  <set>Qt::AlignCenter|Qt::AlignVCenter</set>
-                                </property>
-                                </widget>
-                              </item>
-                              <item row="1" column="0">
+                              <item row="0" column="0">
                                <widget class="QLabel" name="advOutTrack4BitrateLabel">
                                 <property name="minimumSize">
                                  <size>
@@ -4847,7 +4796,7 @@
                                 </property>
                                </widget>
                               </item>
-                              <item row="1" column="1">
+                              <item row="0" column="1">
                                <widget class="QComboBox" name="advOutTrack4Bitrate">
                                 <property name="sizePolicy">
                                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -4915,7 +4864,7 @@
                                 </item>
                                </widget>
                               </item>
-                              <item row="2" column="0">
+                              <item row="1" column="0">
                                <widget class="QLabel" name="label_54">
                                 <property name="text">
                                  <string>Name</string>
@@ -4925,7 +4874,7 @@
                                 </property>
                                </widget>
                               </item>
-                              <item row="2" column="1">
+                              <item row="1" column="1">
                                <widget class="QLineEdit" name="advOutTrack4Name">
                                 <property name="sizePolicy">
                                  <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -4968,17 +4917,7 @@
                               <property name="bottomMargin">
                                <number>9</number>
                               </property>
-                              <item row="0" colspan="2">
-                                <widget class="QLabel" name="multitrackVideoDisabledSettingsAdvAudioTrack5">
-                                <property name="text">
-                                  <string>Basic.Settings.MultitrackVideoDisabledSettings</string>
-                                </property>
-                                <property name="alignment">
-                                  <set>Qt::AlignCenter|Qt::AlignVCenter</set>
-                                </property>
-                                </widget>
-                              </item>
-                              <item row="1" column="0">
+                              <item row="0" column="0">
                                <widget class="QLabel" name="advOutTrack5BitrateLabel">
                                 <property name="minimumSize">
                                  <size>
@@ -4997,7 +4936,7 @@
                                 </property>
                                </widget>
                               </item>
-                              <item row="1" column="1">
+                              <item row="0" column="1">
                                <widget class="QComboBox" name="advOutTrack5Bitrate">
                                 <property name="sizePolicy">
                                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -5065,7 +5004,7 @@
                                 </item>
                                </widget>
                               </item>
-                              <item row="2" column="0">
+                              <item row="1" column="0">
                                <widget class="QLabel" name="label_60">
                                 <property name="text">
                                  <string>Name</string>
@@ -5075,7 +5014,7 @@
                                 </property>
                                </widget>
                               </item>
-                              <item row="2" column="1">
+                              <item row="1" column="1">
                                <widget class="QLineEdit" name="advOutTrack5Name">
                                 <property name="sizePolicy">
                                  <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -5118,17 +5057,7 @@
                               <property name="bottomMargin">
                                <number>9</number>
                               </property>
-                              <item row="0" colspan="2">
-                                <widget class="QLabel" name="multitrackVideoDisabledSettingsAdvAudioTrack6">
-                                <property name="text">
-                                  <string>Basic.Settings.MultitrackVideoDisabledSettings</string>
-                                </property>
-                                <property name="alignment">
-                                  <set>Qt::AlignCenter|Qt::AlignVCenter</set>
-                                </property>
-                                </widget>
-                              </item>
-                              <item row="1" column="0">
+                              <item row="0" column="0">
                                <widget class="QLabel" name="advOutTrack6BitrateLabel">
                                 <property name="minimumSize">
                                  <size>
@@ -5147,7 +5076,7 @@
                                 </property>
                                </widget>
                               </item>
-                              <item row="1" column="1">
+                              <item row="0" column="1">
                                <widget class="QComboBox" name="advOutTrack6Bitrate">
                                 <property name="sizePolicy">
                                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -5215,7 +5144,7 @@
                                 </item>
                                </widget>
                               </item>
-                              <item row="2" column="0">
+                              <item row="1" column="0">
                                <widget class="QLabel" name="label_62">
                                 <property name="text">
                                  <string>Name</string>
@@ -5225,7 +5154,7 @@
                                 </property>
                                </widget>
                               </item>
-                              <item row="2" column="1">
+                              <item row="1" column="1">
                                <widget class="QLineEdit" name="advOutTrack6Name">
                                 <property name="sizePolicy">
                                  <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
