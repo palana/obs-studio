@@ -1204,34 +1204,111 @@
              </item>
             </layout>
            </widget>
-           <widget class="QWidget" name="streamKeyPage">
-            <layout class="QFormLayout" name="streamkeyPageLayout">
-             <property name="fieldGrowthPolicy">
-              <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
-             </property>
-             <property name="labelAlignment">
-              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-             </property>
-             <item row="0" column="0">
-              <widget class="QLabel" name="serverLabel">
-               <property name="text">
-                <string>Basic.AutoConfig.StreamPage.Server</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="1">
-              <widget class="QStackedWidget" name="serverStackedWidget">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="currentIndex">
-                <number>1</number>
-               </property>
-               <widget class="QWidget" name="servicePage">
-                <layout class="QHBoxLayout" name="horizontalLayout_21">
+           <widget class="QScrollArea" name="streamKeyScrollArea">
+            <property name="frameShape">
+             <enum>QFrame::NoFrame</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Plain</enum>
+            </property>
+            <property name="widgetResizable">
+             <bool>true</bool>
+            </property>
+            <widget class="QWidget" name="streamKeyPage">
+             <layout class="QFormLayout" name="streamkeyPageLayout">
+              <property name="fieldGrowthPolicy">
+               <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+              </property>
+              <property name="labelAlignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+              <item row="0" column="0">
+               <widget class="QLabel" name="serverLabel">
+                <property name="text">
+                 <string>Basic.AutoConfig.StreamPage.Server</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QStackedWidget" name="serverStackedWidget">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="currentIndex">
+                 <number>1</number>
+                </property>
+                <widget class="QWidget" name="servicePage">
+                 <layout class="QHBoxLayout" name="horizontalLayout_21">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QComboBox" name="server"/>
+                  </item>
+                 </layout>
+                </widget>
+                <widget class="QWidget" name="customPage">
+                 <layout class="QHBoxLayout" name="horizontalLayout_22">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QLineEdit" name="customServer"/>
+                  </item>
+                 </layout>
+                </widget>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="serviceCustomServerLabel">
+                <property name="text">
+                 <string>Basic.Settings.Stream.ServiceCustomServer</string>
+                </property>
+                <property name="buddy">
+                 <cstring>serviceCustomServer</cstring>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QLineEdit" name="serviceCustomServer"/>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="streamKeyLabel">
+                <property name="text">
+                 <string>Basic.AutoConfig.StreamPage.StreamKey</string>
+                </property>
+                <property name="openExternalLinks">
+                 <bool>true</bool>
+                </property>
+                <property name="buddy">
+                 <cstring>key</cstring>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QFrame" name="streamKeyWidget">
+                <layout class="QHBoxLayout" name="horizontalLayout_11">
                  <property name="leftMargin">
                   <number>0</number>
                  </property>
@@ -1245,12 +1322,188 @@
                   <number>0</number>
                  </property>
                  <item>
-                  <widget class="QComboBox" name="server"/>
+                  <widget class="QLineEdit" name="key">
+                   <property name="inputMask">
+                    <string notr="true"/>
+                   </property>
+                   <property name="text">
+                    <string notr="true"/>
+                   </property>
+                   <property name="echoMode">
+                    <enum>QLineEdit::Password</enum>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="show">
+                   <property name="text">
+                    <string>Show</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="UrlPushButton" name="getStreamKeyButton">
+                   <property name="toolTip">
+                    <string/>
+                   </property>
+                   <property name="toolTipDuration">
+                    <number>-4</number>
+                   </property>
+                   <property name="text">
+                    <string>Basic.AutoConfig.StreamPage.GetStreamKey</string>
+                   </property>
+                  </widget>
                  </item>
                 </layout>
                </widget>
-               <widget class="QWidget" name="customPage">
-                <layout class="QHBoxLayout" name="horizontalLayout_22">
+              </item>
+              <item row="3" column="0">
+               <spacer name="horizontalSpacer_18">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>170</width>
+                  <height>0</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item row="3" column="1">
+               <layout class="QHBoxLayout" name="horizontalLayout_15">
+                <item>
+                 <widget class="QPushButton" name="connectAccount2">
+                  <property name="cursor">
+                   <cursorShape>PointingHandCursor</cursorShape>
+                  </property>
+                  <property name="text">
+                   <string>Basic.AutoConfig.StreamPage.ConnectAccount</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_19">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </item>
+              <item row="4" column="0">
+               <widget class="QLabel" name="connectedAccountLabel">
+                <property name="text">
+                 <string>Basic.AutoConfig.StreamPage.ConnectedAccount</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <layout class="QHBoxLayout" name="horizontalLayout_23">
+                <property name="spacing">
+                 <number>8</number>
+                </property>
+                <property name="leftMargin">
+                 <number>7</number>
+                </property>
+                <property name="rightMargin">
+                 <number>7</number>
+                </property>
+                <item>
+                 <widget class="QLabel" name="connectedAccountText">
+                  <property name="styleSheet">
+                   <string notr="true">font-weight: bold</string>
+                  </property>
+                  <property name="text">
+                   <string>Auth.LoadingChannel.Title</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="disconnectAccount">
+                  <property name="text">
+                   <string>Basic.AutoConfig.StreamPage.DisconnectAccount</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_24">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </item>
+              <item row="5" column="1">
+               <layout class="QHBoxLayout" name="horizontalLayout_28">
+                <item>
+                 <widget class="QPushButton" name="useStreamKeyAdv">
+                  <property name="text">
+                   <string>Basic.AutoConfig.StreamPage.UseStreamKeyAdvanced</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_28">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </item>
+              <item row="6" column="1">
+               <widget class="QCheckBox" name="useAuth">
+                <property name="text">
+                 <string>Basic.Settings.Stream.Custom.UseAuthentication</string>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="0">
+               <widget class="QLabel" name="authUsernameLabel">
+                <property name="text">
+                 <string>Basic.Settings.Stream.Custom.Username</string>
+                </property>
+                <property name="buddy">
+                 <cstring>authUsername</cstring>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="1">
+               <widget class="QLineEdit" name="authUsername"/>
+              </item>
+              <item row="8" column="0">
+               <widget class="QLabel" name="authPwLabel">
+                <property name="text">
+                 <string>Basic.Settings.Stream.Custom.Password</string>
+                </property>
+                <property name="buddy">
+                 <cstring>authPw</cstring>
+                </property>
+               </widget>
+              </item>
+              <item row="8" column="1">
+               <widget class="QFrame" name="authPwWidget">
+                <layout class="QHBoxLayout" name="horizontalLayout_25">
                  <property name="leftMargin">
                   <number>0</number>
                  </property>
@@ -1264,293 +1517,222 @@
                   <number>0</number>
                  </property>
                  <item>
-                  <widget class="QLineEdit" name="customServer"/>
+                  <widget class="QLineEdit" name="authPw">
+                   <property name="echoMode">
+                    <enum>QLineEdit::Password</enum>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="authPwShow">
+                   <property name="text">
+                    <string>Show</string>
+                   </property>
+                  </widget>
                  </item>
                 </layout>
                </widget>
-              </widget>
-             </item>
-             <item row="1" column="0">
-              <widget class="QLabel" name="streamKeyLabel">
-               <property name="text">
-                <string>Basic.AutoConfig.StreamPage.StreamKey</string>
-               </property>
-               <property name="openExternalLinks">
-                <bool>true</bool>
-               </property>
-               <property name="buddy">
-                <cstring>key</cstring>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1">
-              <widget class="QFrame" name="streamKeyWidget">
-               <layout class="QHBoxLayout" name="horizontalLayout_11">
-                <property name="leftMargin">
-                 <number>0</number>
+              </item>
+              <item row="9" colspan="2">
+               <widget class="QGroupBox" name="multitrackVideoGroupBox">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
                 </property>
-                <property name="topMargin">
-                 <number>0</number>
+                <property name="title">
+                 <string>Basic.Settings.Stream.MultitrackVideoLabel</string>
                 </property>
-                <property name="rightMargin">
-                 <number>0</number>
+                <layout class="QFormLayout" name="multitrackVideoLayout">
+                 <property name="fieldGrowthPolicy">
+                  <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+                 </property>
+                 <property name="labelAlignment">
+                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                 </property>
+                 <property name="leftMargin">
+                  <number>9</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>2</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>9</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>9</number>
+                 </property>
+                 <item row="0" column="1">
+                  <widget class="QCheckBox" name="enableMultitrackVideo">
+                   <property name="text">
+                    <string>Basic.Settings.Stream.EnableMultitrackVideo</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="1">
+                  <widget class="QLabel" name="multitrackVideoInfo">
+                   <property name="text">
+                    <string>MultitrackVideo.Info</string>
+                   </property>
+                   <property name="textFormat">
+                    <enum>Qt::RichText</enum>
+                   </property>
+                   <property name="wordWrap">
+                    <bool>true</bool>
+                   </property>
+                   <property name="openExternalLinks">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="2" column="0">
+                  <widget class="QLabel" name="multitrackVideoMaximumAggregateBitrateLabel">
+                   <property name="text">
+                    <string>Basic.Settings.Stream.MultitrackVideoMaximumAggregateBitrate</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="2" column="1">
+                  <layout class="QHBoxLayout">
+                   <item>
+                    <widget class="QCheckBox" name="multitrackVideoMaximumAggregateBitrateAuto">
+                     <property name="text">
+                      <string>Basic.Settings.Stream.MultitrackVideoMaximumAggregateBitrateAuto</string>
+                     </property>
+                     <property name="sizePolicy">
+                      <enum>QSizePolicy::Minimum, QSizePolicy::Minimum</enum>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QSpinBox" name="multitrackVideoMaximumAggregateBitrate">
+                     <property name="sizePolicy">
+                      <enum>QSizePolicy::MinimumExpanding, QSizePolicy::Minimum</enum>
+                     </property>
+                     <property name="minimum">
+                      <number>500</number>
+                     </property>
+                     <property name="maximum">
+                      <number>1000000</number>
+                     </property>
+                     <property name="value">
+                      <number>8000</number>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                 <item row="3" column="0">
+                  <widget class="QLabel" name="multitrackVideoMaximumVideoTracksLabel">
+                   <property name="text">
+                    <string>Basic.Settings.Stream.MultitrackVideoMaximumVideoTracks</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="3" column="1">
+                  <layout class="QHBoxLayout">
+                   <item>
+                    <widget class="QCheckBox" name="multitrackVideoMaximumVideoTracksAuto">
+                     <property name="text">
+                      <string>Basic.Settings.Stream.MultitrackVideoMaximumVideoTracksAuto</string>
+                     </property>
+                     <property name="sizePolicy">
+                      <enum>QSizePolicy::Minimum, QSizePolicy::Minimum</enum>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QSpinBox" name="multitrackVideoMaximumVideoTracks">
+                     <property name="sizePolicy">
+                      <enum>QSizePolicy::MinimumExpanding, QSizePolicy::Minimum</enum>
+                     </property>
+                     <property name="minimum">
+                      <number>0</number>
+                     </property>
+                     <property name="maximum">
+                      <number>100</number>
+                     </property>
+                     <property name="value">
+                      <number>0</number>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                 <item row="4" column="1">
+                  <widget class="QCheckBox" name="multitrackVideoStreamDumpEnable">
+                   <property name="text">
+                    <string>Basic.Settings.Stream.MultitrackVideoStreamDumpEnable</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="5" column="1">
+                  <widget class="QCheckBox" name="multitrackVideoConfigOverrideEnable">
+                   <property name="text">
+                    <string>Basic.Settings.Stream.MultitrackVideoConfigOverrideEnable</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="6" column="0">
+                  <widget class="QLabel" name="multitrackVideoConfigOverrideLabel">
+                   <property name="text">
+                    <string>Basic.Settings.Stream.MultitrackVideoConfigOverride</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="7" column="1">
+                  <widget class="QPlainTextEdit" name="multitrackVideoConfigOverride">
+                   <property name="sizePolicy">
+                    <enum>QSizePolicy::Preferred, QSizePolicy::MinimumExpanding</enum>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item row="10" column="0">
+               <widget class="QLabel" name="twitchAddonLabel">
+                <property name="text">
+                 <string>Basic.Settings.Stream.TTVAddon</string>
                 </property>
-                <property name="bottomMargin">
-                 <number>0</number>
+                <property name="buddy">
+                 <cstring>twitchAddonDropdown</cstring>
                 </property>
-                <item>
-                 <widget class="QLineEdit" name="key">
-                  <property name="inputMask">
-                   <string notr="true"/>
-                  </property>
-                  <property name="text">
-                   <string notr="true"/>
-                  </property>
-                  <property name="echoMode">
-                   <enum>QLineEdit::Password</enum>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QPushButton" name="show">
-                  <property name="text">
-                   <string>Show</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="UrlPushButton" name="getStreamKeyButton">
-                  <property name="toolTip">
-                   <string/>
-                  </property>
-                  <property name="toolTipDuration">
-                   <number>-4</number>
-                  </property>
-                  <property name="text">
-                   <string>Basic.AutoConfig.StreamPage.GetStreamKey</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </widget>
-             </item>
-             <item row="3" column="0">
-              <spacer name="horizontalSpacer_18">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>170</width>
-                 <height>8</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item row="4" column="1">
-              <layout class="QHBoxLayout" name="horizontalLayout_23">
-               <property name="spacing">
-                <number>8</number>
-               </property>
-               <property name="leftMargin">
-                <number>7</number>
-               </property>
-               <property name="rightMargin">
-                <number>7</number>
-               </property>
-               <item>
-                <widget class="QLabel" name="connectedAccountText">
-                 <property name="styleSheet">
-                  <string notr="true">font-weight: bold</string>
-                 </property>
-                 <property name="text">
-                  <string>Auth.LoadingChannel.Title</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QPushButton" name="disconnectAccount">
-                 <property name="text">
-                  <string>Basic.AutoConfig.StreamPage.DisconnectAccount</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <spacer name="horizontalSpacer_24">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>40</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-              </layout>
-             </item>
-             <item row="6" column="1">
-              <widget class="QCheckBox" name="bandwidthTestEnable">
-               <property name="text">
-                <string>Basic.Settings.Stream.BandwidthTestMode</string>
-               </property>
-              </widget>
-             </item>
-             <item row="7" column="1">
-              <widget class="QCheckBox" name="useAuth">
-               <property name="text">
-                <string>Basic.Settings.Stream.Custom.UseAuthentication</string>
-               </property>
-              </widget>
-             </item>
-             <item row="9" column="0">
-              <widget class="QLabel" name="authUsernameLabel">
-               <property name="text">
-                <string>Basic.Settings.Stream.Custom.Username</string>
-               </property>
-               <property name="buddy">
-                <cstring>authUsername</cstring>
-               </property>
-              </widget>
-             </item>
-             <item row="9" column="1">
-              <widget class="QLineEdit" name="authUsername"/>
-             </item>
-             <item row="10" column="0">
-              <widget class="QLabel" name="authPwLabel">
-               <property name="text">
-                <string>Basic.Settings.Stream.Custom.Password</string>
-               </property>
-               <property name="buddy">
-                <cstring>authPw</cstring>
-               </property>
-              </widget>
-             </item>
-             <item row="10" column="1">
-              <widget class="QFrame" name="authPwWidget">
-               <layout class="QHBoxLayout" name="horizontalLayout_25">
-                <property name="leftMargin">
-                 <number>0</number>
+               </widget>
+              </item>
+              <item row="10" column="1">
+               <widget class="QComboBox" name="twitchAddonDropdown"/>
+              </item>
+              <item row="11" column="1">
+               <widget class="QCheckBox" name="bandwidthTestEnable">
+                <property name="text">
+                 <string>Basic.Settings.Stream.BandwidthTestMode</string>
                 </property>
-                <property name="topMargin">
-                 <number>0</number>
+               </widget>
+              </item>
+              <item row="12" column="1">
+               <widget class="QCheckBox" name="ignoreRecommended">
+                <property name="text">
+                 <string>Basic.Settings.Stream.IgnoreRecommended</string>
                 </property>
-                <property name="rightMargin">
-                 <number>0</number>
+               </widget>
+              </item>
+              <item row="13" column="1">
+               <widget class="QLabel" name="enforceSettingsLabel">
+                <property name="text">
+                 <string notr="true"/>
                 </property>
-                <property name="bottomMargin">
-                 <number>0</number>
+                <property name="textFormat">
+                 <enum>Qt::RichText</enum>
                 </property>
-                <item>
-                 <widget class="QLineEdit" name="authPw">
-                  <property name="echoMode">
-                   <enum>QLineEdit::Password</enum>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QPushButton" name="authPwShow">
-                  <property name="text">
-                   <string>Show</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </widget>
-             </item>
-             <item row="8" column="1">
-              <widget class="QComboBox" name="twitchAddonDropdown"/>
-             </item>
-             <item row="8" column="0">
-              <widget class="QLabel" name="twitchAddonLabel">
-               <property name="text">
-                <string>Basic.Settings.Stream.TTVAddon</string>
-               </property>
-               <property name="buddy">
-                <cstring>twitchAddonDropdown</cstring>
-               </property>
-              </widget>
-             </item>
-             <item row="11" column="1">
-              <widget class="QCheckBox" name="ignoreRecommended">
-               <property name="text">
-                <string>Basic.Settings.Stream.IgnoreRecommended</string>
-               </property>
-              </widget>
-             </item>
-             <item row="12" column="1">
-              <widget class="QLabel" name="enforceSettingsLabel">
-               <property name="text">
-                <string notr="true"/>
-               </property>
-               <property name="textFormat">
-                <enum>Qt::RichText</enum>
-               </property>
-               <property name="openExternalLinks">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item row="5" column="1">
-              <layout class="QHBoxLayout" name="horizontalLayout_28">
-               <item>
-                <widget class="QPushButton" name="useStreamKeyAdv">
-                 <property name="text">
-                  <string>Basic.AutoConfig.StreamPage.UseStreamKeyAdvanced</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <spacer name="horizontalSpacer_28">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>40</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-              </layout>
-             </item>
-             <item row="4" column="0">
-              <widget class="QLabel" name="connectedAccountLabel">
-               <property name="text">
-                <string>Basic.AutoConfig.StreamPage.ConnectedAccount</string>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="1">
-              <layout class="QHBoxLayout" name="horizontalLayout_15">
-               <item>
-                <widget class="QPushButton" name="connectAccount2">
-                 <property name="cursor">
-                  <cursorShape>PointingHandCursor</cursorShape>
-                 </property>
-                 <property name="text">
-                  <string>Basic.AutoConfig.StreamPage.ConnectAccount</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <spacer name="horizontalSpacer_19">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>40</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-              </layout>
-             </item>
-            </layout>
+                <property name="openExternalLinks">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
            </widget>
           </widget>
          </item>
@@ -1585,6 +1767,25 @@
             <property name="bottomMargin">
              <number>0</number>
             </property>
+            <item>
+             <widget class="QFrame" name="multitrackVideoNoticeBox">
+              <property name="themeID" stdset="0">
+               <string notr="true">notice</string>
+              </property>
+              <layout class="QVBoxLayout" name="multitrackVideoNoticeBoxLayout">
+               <item>
+                <widget class="QLabel" name="multitrackVideoNotice">
+                 <property name="text">
+                  <string>Basic.Settings.MultitrackVideoDisabledSettings</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
             <item>
              <widget class="QFrame" name="widget">
               <property name="sizePolicy">
@@ -1746,7 +1947,7 @@
                         <number>9</number>
                        </property>
                        <item row="0" column="0">
-                        <widget class="QLabel" name="label_19">
+                        <widget class="QLabel" name="simpleOutputVBitrateLabel">
                          <property name="minimumSize">
                           <size>
                            <width>170</width>
@@ -1778,7 +1979,7 @@
                         </widget>
                        </item>
                        <item row="1" column="0">
-                        <widget class="QLabel" name="label_20">
+                        <widget class="QLabel" name="simpleOutputABitrateLabel">
                          <property name="text">
                           <string>Basic.Settings.Output.AudioBitrate</string>
                          </property>
@@ -1889,7 +2090,7 @@
                         </widget>
                        </item>
                        <item row="5" column="0">
-                        <widget class="QLabel" name="label_23">
+                        <widget class="QLabel" name="simpleOutCustomLabel">
                          <property name="text">
                           <string>Basic.Settings.Output.CustomEncoderSettings</string>
                          </property>
@@ -2537,7 +2738,7 @@
                             <number>8</number>
                            </property>
                            <item row="1" column="0">
-                            <widget class="QLabel" name="label_28">
+                            <widget class="QLabel" name="advStreamTrackWidgetLabel">
                              <property name="minimumSize">
                               <size>
                                <width>170</width>
@@ -4245,7 +4446,7 @@
                                </widget>
                               </item>
                               <item row="0" column="0">
-                               <widget class="QLabel" name="label_25">
+                               <widget class="QLabel" name="advOutTrack1BitrateLabel">
                                 <property name="minimumSize">
                                  <size>
                                   <width>170</width>
@@ -4297,7 +4498,7 @@
                                <number>9</number>
                               </property>
                               <item row="0" column="0">
-                               <widget class="QLabel" name="label_49">
+                               <widget class="QLabel" name="advOutTrack2BitrateLabel">
                                 <property name="minimumSize">
                                  <size>
                                   <width>170</width>
@@ -4437,7 +4638,7 @@
                                <number>9</number>
                               </property>
                               <item row="0" column="0">
-                               <widget class="QLabel" name="label_51">
+                               <widget class="QLabel" name="advOutTrack3BitrateLabel">
                                 <property name="minimumSize">
                                  <size>
                                   <width>170</width>
@@ -4577,7 +4778,7 @@
                                <number>9</number>
                               </property>
                               <item row="0" column="0">
-                               <widget class="QLabel" name="label_53">
+                               <widget class="QLabel" name="advOutTrack4BitrateLabel">
                                 <property name="minimumSize">
                                  <size>
                                   <width>170</width>
@@ -4717,7 +4918,7 @@
                                <number>9</number>
                               </property>
                               <item row="0" column="0">
-                               <widget class="QLabel" name="label_59">
+                               <widget class="QLabel" name="advOutTrack5BitrateLabel">
                                 <property name="minimumSize">
                                  <size>
                                   <width>170</width>
@@ -4857,7 +5058,7 @@
                                <number>9</number>
                               </property>
                               <item row="0" column="0">
-                               <widget class="QLabel" name="label_61">
+                               <widget class="QLabel" name="advOutTrack6BitrateLabel">
                                 <property name="minimumSize">
                                  <size>
                                   <width>170</width>
@@ -8251,7 +8452,7 @@
   <connection>
    <sender>simpleOutAdvanced</sender>
    <signal>toggled(bool)</signal>
-   <receiver>label_23</receiver>
+   <receiver>simpleOutCustomLabel</receiver>
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
