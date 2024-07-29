@@ -145,10 +145,10 @@ static void *io_thread(void *opaque)
 				// Copy from the buffer to our local chunk
 				deque_pop_front(&out->io.data,
 						chunk + chunk_used,
-						header.data_length);
+						(size_t)header.data_length);
 
 				// Update offsets
-				chunk_used += header.data_length;
+				chunk_used += (size_t)header.data_length;
 				current_seek_position += header.data_length;
 			}
 

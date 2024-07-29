@@ -51,17 +51,18 @@ static int64_t array_output_seek(void *param, int64_t offset,
 {
 	struct array_output_data *output = param;
 
+	size_t offset_s = (size_t)offset;
 	size_t new_pos = 0;
 
 	switch (seek_type) {
 	case SERIALIZE_SEEK_START:
-		new_pos = offset;
+		new_pos = offset_s;
 		break;
 	case SERIALIZE_SEEK_CURRENT:
-		new_pos = output->cur_pos + offset;
+		new_pos = output->cur_pos + offset_s;
 		break;
 	case SERIALIZE_SEEK_END:
-		new_pos = output->bytes.num - offset;
+		new_pos = output->bytes.num - offset_s;
 		break;
 	}
 
