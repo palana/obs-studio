@@ -495,8 +495,7 @@ void MultitrackVideoOutput::StopStreaming()
 }
 
 bool MultitrackVideoOutput::HandleIncompatibleSettings(QWidget *parent, config_t *config, obs_service_t *service,
-						       bool &useDelay, bool &enableNewSocketLoop,
-						       bool &enableDynBitrate)
+						       bool &useDelay, bool &enableDynBitrate)
 {
 	QString incompatible_settings;
 	QString where_to_disable;
@@ -522,10 +521,6 @@ bool MultitrackVideoOutput::HandleIncompatibleSettings(QWidget *parent, config_t
 	};
 
 	check_setting(useDelay, "Basic.Settings.Advanced.StreamDelay", "Basic.Settings.Advanced.StreamDelay");
-#ifdef _WIN32
-	check_setting(enableNewSocketLoop, "Basic.Settings.Advanced.Network.EnableNewSocketLoop",
-		      "Basic.Settings.Advanced.Network");
-#endif
 	check_setting(enableDynBitrate, "Basic.Settings.Output.DynamicBitrate.Beta", "Basic.Settings.Advanced.Network");
 
 	if (incompatible_settings.isEmpty())
@@ -562,14 +557,10 @@ bool MultitrackVideoOutput::HandleIncompatibleSettings(QWidget *parent, config_t
 
 	if (mb.clickedButton() == this_stream || mb.clickedButton() == all_streams) {
 		useDelay = false;
-		enableNewSocketLoop = false;
 		enableDynBitrate = false;
 
 		if (mb.clickedButton() == all_streams) {
 			config_set_bool(config, "Output", "DelayEnable", false);
-#ifdef _WIN32
-			config_set_bool(config, "Output", "NewSocketLoopEnable", false);
-#endif
 			config_set_bool(config, "Output", "DynamicBitrate", false);
 		}
 

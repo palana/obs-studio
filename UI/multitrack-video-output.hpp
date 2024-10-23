@@ -35,7 +35,7 @@ public:
 	void StartedStreaming();
 	void StopStreaming();
 	bool HandleIncompatibleSettings(QWidget *parent, config_t *config, obs_service_t *service, bool &useDelay,
-					bool &enableNewSocketLoop, bool &enableDynBitrate);
+					bool &enableDynBitrate);
 
 	OBSOutputAutoRelease StreamingOutput()
 	{
